@@ -1,51 +1,66 @@
 "use strict";
+// class Same {
+//   constructor(public first: number[], public second: number[]) {}
+//   frequency() {
+//     if (this.first.length != this.second.length) {
+//       return false;
+//     }
+//     for (let i = 0; i < this.first.length; i++) {
+//       let correctIndex = this.second.indexOf(this.first[i] ** 2);
+//       if (correctIndex == -1) {
+//         return false;
+//       }
+//       this.second.splice(correctIndex, 1);
+//     }
+//     return true;
+//   }
+// }
+// const thesame = new Same([1, 2, 3, 4], [1, 4, 9, 16]);
+// console.log(thesame.frequency());
+// class Same {
+//   constructor(public first: number[], public second: number[]) {}
+//   counter() {
+//     if (this.first.length !== this.second.length) {
+//       return false;
+//     }
+//     let firstCounter: any = {};
+//     let secondCounter: any = {};
+//     for (let i = 0; i < this.first.length; i++) {
+//       let iVal = this.first[i];
+//       firstCounter[iVal] = (firstCounter[iVal] || 0) + 1;
+//     }
+//     for (let j = 0; j < this.second.length; j++) {
+//       let jVal = this.second[j];
+//       secondCounter[jVal] = (secondCounter[jVal] || 0) + 1;
+//     }
+//     for (let key in firstCounter) {
+//       if (!(Number(key) ** 2 in secondCounter)) {
+//         return false;
+//       }
+//       if (firstCounter[key] !== secondCounter[Number(key) ** 2]) {
+//         return false;
+//       }
+//     }
+//     return true;
+//   }
+// }
+// const same = new Same([1, 2, 3, 4, 3], [1, 4, 9, 16, 9]);
+// console.log(same.counter());
 // class Sorter {
 //   constructor(public collection: number[]) {}
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = function (d, b) {
-        extendStatics = Object.setPrototypeOf ||
-            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
-        return extendStatics(d, b);
-    };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
 //   sort(): void {
-//     const collectionLength = this.collection.length;
-//     for (let i = 0; i < collectionLength; i++) {
-//       for (let j = 1; j < collectionLength - 1; j++) {
-//         console.log(this.collection[i], this.collection[j]);
+//     const { length } = this.collection;
+//     for (let i = 0; i < length; i++) {
+//       for (let j = 0; j < length - i - 1; j++) {
+//         if (this.collection[j] > this.collection[j + 1]) {
+//           const leftHand = this.collection[j];
+//           this.collection[j] = this.collection[j + 1];
+//           this.collection[j + 1] = leftHand;
+//         }
 //       }
 //     }
 //   }
 // }
-// const sorter = new Sorter([2, -3, 20, 9]).sort();
-var Department = /** @class */ (function () {
-    function Department(name) {
-        this.name = name;
-    }
-    Department.prototype.printName = function () {
-        console.log("this is " + this.name + " department");
-    };
-    return Department;
-}());
-var ElectricalDepartment = /** @class */ (function (_super) {
-    __extends(ElectricalDepartment, _super);
-    function ElectricalDepartment() {
-        return _super.call(this, name) || this;
-    }
-    ElectricalDepartment.prototype.printMeeting = function () {
-        console.log("this minutes is for " + this.name);
-    };
-    ElectricalDepartment.prototype.doOthers = function () {
-        return "hello world";
-    };
-    return ElectricalDepartment;
-}(Department));
-var department;
-department = new ElectricalDepartment();
-department.;
+// const sorter = new Sorter([1, 5, 3, 2]);
+// sorter.sort();
+// console.log(sorter.collection);
