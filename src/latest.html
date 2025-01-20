@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Populated Tables</title>
+    <style>
+        table,
+        th,
+        td {
+            border: 1px solid rgb(241, 241, 241);
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 8px 15px 8px 15px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container"></div>
+    <script>
+        function populateTables(data) {
+            const container = document.getElementById("container");
+            const groupedData = {};
+            for (const [lastUpdated, entries] of Object.entries(data)) {
+                const date = new Date(parseInt(lastUpdated));
+                const dateString = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+
+                if (!groupedData[dateString]) {
+                    groupedData[dateString] = {
+                        moneyMarket: [],
+                        nonMoneyMarket: []
+                    };
+                }
+                entries.forEach((entry) => {
+                    const branchKey = entry.branch + entry.currency;
+                    if (entry.fundCategory === "Money Market") {
+                        groupedData[dateString].moneyMarket.push({ ...entry, dateString });
+                    } else {
+                        groupedData[dateString].nonMoneyMarket.push({ ...entry, dateString });
+                    }
+                });
+            }
+
+            for (const [dateString, market] of Object.entries(groupedData)) {
+                if (market.nonMoneyMarket.length) {
+                    const nonMoneyMarket = market.nonMoneyMarket
+                    const nonMoneyMarketObj = {};
+                    if (!nonMoneyMarketObj[dateString]) {
+                        nonMoneyMarketObj[dateString] = {}
+                    }
+                    nonMoneyMarket.forEach((entry) => {
+                        const branchKey = entry.branch + entry.currency;
+                        if (!nonMoneyMarketObj[dateString][branchKey]) {
+                            nonMoneyMarketObj[dateString][branchKey] = {
+                                branch: entry.branch,
+                                currency: entry.currency,
+                                totalCases: 0,
+                                totalAmount: 0,
+                                EPFKIBCases: 0,
+                                EPFKIBAmount: 0,
+                                EPFThirdPartyCases: 0,
+                                EPFThirdPartyAmount: 0,
+                                CASHKIBCases: 0,
+                                CASHKIBAmount: 0,
+                                CASHThirdPartyCases: 0,
+                                CASHThirdPartyAmount: 0,
+                                PRSKIBCases: 0,
+                                PRSKIBAmount: 0,
+                                PRSThirdPartyCases: 0,
+                                PRSThirdPartyAmount: 0,
+                            };
+                        }
+                        if (entry.fundType === "PRS") {
+                            if (entry.issuingHouse === "KIB") {
+                                nonMoneyMarketObj[dateString][branchKey].PRSKIBCases++;
+                                nonMoneyMarketObj[dateString][branchKey].PRSKIBAmount +=
+                                    entry.investmentAmount;
+                            } else if (entry.issuingHouse === "3RD PARTY") {
+                                nonMoneyMarketObj[dateString][branchKey].PRSThirdPartyCases++;
+                                nonMoneyMarketObj[dateString][branchKey].PRSThirdPartyAmount +=
+                                    entry.investmentAmount;
+                            }
+                        } else {
+                            if (entry.paymentMethod === "EPF") {
+                                if (entry.issuingHouse === "KIB") {
+                                    nonMoneyMarketObj[dateString][branchKey].EPFKIBCases++;
+                                    nonMoneyMarketObj[dateString][branchKey].EPFKIBAmount +=
+                                        entry.investmentAmount;
+                                }
+                                if (entry.issuingHouse === "3RD PARTY") {
+                                    nonMoneyMarketObj[dateString][branchKey].EPFThirdPartyCases++;
+                                    nonMoneyMarketObj[dateString][branchKey].EPFThirdPartyAmount +=
+                                        entry.investmentAmount;
+                                }
+                            }
+                            if (entry.paymentMethod === "CASH") {
+                                if (entry.issuingHouse === "KIB") {
+                                    nonMoneyMarketObj[dateString][branchKey].CASHKIBCases++;
+                                    nonMoneyMarketObj[dateString][branchKey].CASHKIBAmount +=
+                                        entry.investmentAmount;
+                                }
+                                if (entry.issuingHouse === "3RD PARTY") {
+                                    nonMoneyMarketObj[dateString][branchKey].CASHThirdPartyCases++;
+                                    nonMoneyMarketObj[dateString][branchKey].CASHThirdPartyAmount +=
+                                        entry.investmentAmount;
+                                }
+                            }
+                        }
+
+                    })
+                    generateHtml(nonMoneyMarketObj)
+                }
+                if (market.moneyMarket.length) {
+                    const moneyMarket = market.moneyMarket
+                    const moneyMarketObj = {}
+                    if (!moneyMarketObj[dateString]) {
+                        moneyMarketObj[dateString] = {}
+                    }
+                    moneyMarket.forEach((entry) => {
+                        const branchKey = entry.branch + entry.currency;
+                        if (!moneyMarketObj[dateString][branchKey]) {
+                            moneyMarketObj[dateString][branchKey] = {
+                                branch: entry.branch,
+                                currency: entry.currency,
+                                totalCases: 0,
+                                totalAmount: 0,
+                                EPFKIBCases: 0,
+                                EPFKIBAmount: 0,
+                                EPFThirdPartyCases: 0,
+                                EPFThirdPartyAmount: 0,
+                                CASHKIBCases: 0,
+                                CASHKIBAmount: 0,
+                                CASHThirdPartyCases: 0,
+                                CASHThirdPartyAmount: 0,
+                                PRSKIBCases: 0,
+                                PRSKIBAmount: 0,
+                                PRSThirdPartyCases: 0,
+                                PRSThirdPartyAmount: 0,
+                            };
+                        }
+                        if (entry.fundType === "PRS") {
+                            if (entry.issuingHouse === "KIB") {
+                                moneyMarketObj[dateString][branchKey].PRSKIBCases++;
+                                moneyMarketObj[dateString][branchKey].PRSKIBAmount +=
+                                    entry.investmentAmount;
+                            } else if (entry.issuingHouse === "3RD PARTY") {
+                                moneyMarketObj[dateString][branchKey].PRSThirdPartyCases++;
+                                moneyMarketObj[dateString][branchKey].PRSThirdPartyAmount +=
+                                    entry.investmentAmount;
+                            }
+                        } else {
+                            if (entry.paymentMethod === "EPF") {
+                                if (entry.issuingHouse === "KIB") {
+                                    moneyMarketObj[dateString][branchKey].EPFKIBCases++;
+                                    moneyMarketObj[dateString][branchKey].EPFKIBAmount +=
+                                        entry.investmentAmount;
+                                }
+                                if (entry.issuingHouse === "3RD PARTY") {
+                                    moneyMarketObj[dateString][branchKey].EPFThirdPartyCases++;
+                                    moneyMarketObj[dateString][branchKey].EPFThirdPartyAmount +=
+                                        entry.investmentAmount;
+                                }
+                            }
+                            if (entry.paymentMethod === "CASH") {
+                                if (entry.issuingHouse === "KIB") {
+                                    moneyMarketObj[dateString][branchKey].CASHKIBCases++;
+                                    moneyMarketObj[dateString][branchKey].CASHKIBAmount +=
+                                        entry.investmentAmount;
+                                }
+                                if (entry.issuingHouse === "3RD PARTY") {
+                                    moneyMarketObj[dateString][branchKey].CASHThirdPartyCases++;
+                                    moneyMarketObj[dateString][branchKey].CASHThirdPartyAmount +=
+                                        entry.investmentAmount;
+                                }
+                            }
+                        }
+                    })
+                    console.log('moneyMarketObj', moneyMarket)
+
+                    generateHtml(moneyMarketObj, 'moneyMarket')
+                }
+            }
+        }
+
+        function generateHtml(market, marketType) {
+            for (const [dateString, branches] of Object.entries(market)) {
+                let html = `<h2>Date: ${dateString}</h2>`;
+                if(marketType === 'moneyMarket'){
+                    html += `<p>Sales Submission Statistic Summary Report - Money Market</p>`
+                }else{
+                    html += `<p> Sales Submission Statistic Summary Report </p>`
+                }
+
+
+                let currency;
+                html += `<table>
+                        <tr>
+                            <th style="background-color: #000; color: #fff;">No.</th>
+                            <th style="background-color: #000; color: #fff;">Processing Branch</th>
+                            <th style="background-color: #000; color: #fff;" colspan="4">EPF</th>
+                            <th style="background-color: #000; color: #fff;" colspan="4">CASH</th>
+                            <th style="background-color: #000; color: #fff;" colspan="4">PRS</th>
+                        </tr>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th colspan="2">KIB</th>
+                            <th colspan="2">3rd Party</th>
+                            <th colspan="2">KIB</th>
+                            <th colspan="2">3rd Party</th>
+                            <th colspan="2">KIB</th>
+                            <th colspan="2">3rd Party</th>
+                        </tr>
+                        <tr>
+                            <th></th>
+                            <th></th>
+                            <th>No. of cases</th>
+                            <th>Amount</th>
+                            <th>No. of cases</th>
+                            <th>Amount</th>
+                            <th>No. of cases</th>
+                            <th>Amount</th>
+                            <th>No. of cases</th>
+                            <th>Amount</th>
+                            <th>No. of cases</th>
+                            <th>Amount</th>
+                            <th>No. of cases</th>
+                            <th>Amount</th>
+                        </tr>`;
+                for (const [key, branch] of Object.entries(branches)) {
+                    const index = Object.keys(branches).indexOf(key);
+                    html += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${branch.branch}</td>
+                            <td>${branch.EPFKIBCases}</td>
+                            <td>${branch.EPFKIBAmount}</td>
+                            <td>${branch.EPFThirdPartyCases}</td>
+                            <td>${branch.EPFThirdPartyAmount}</td>
+                            <td>${branch.CASHKIBCases}</td>
+                            <td>${branch.CASHKIBAmount}</td>
+                            <td>${branch.CASHThirdPartyCases}</td>
+                            <td>${branch.CASHThirdPartyAmount}</td>
+                            <td>${branch.PRSKIBCases}</td>
+                            <td>${branch.PRSKIBAmount}</td>
+                            <td>${branch.PRSThirdPartyCases}</td>
+                            <td>${branch.PRSThirdPartyAmount}</td>
+                        </tr>
+                        `;
+                }
+                html += `<tr>
+                            <td colspan="2">Total</td>
+                            <td>0</td>
+                            <td>0.00</td>
+                            <td>0</td>
+                            <td>0.00</td>
+                            <td>0</td>
+                            <td>0.00</td>
+                            <td>0</td>
+                            <td>0.00</td>
+                            <td>0</td>
+                            <td>0.00</td>
+                            <td>0</td>
+                            <td>0.00</td>
+                        </tr></table>`;
+                container.innerHTML += html;
+            }
+
+        }
+        const data = {
+            1706578915928: [
+                {
+                    branch: "Batu Pahat - PW Office",
+                    fundCategory: "Non Money Market",
+                    fundType: "UT",
+                    currency: "MYR",
+                    issuingHouse: "3RD PARTY",
+                    paymentMethod: "EPF",
+                    investmentAmount: 5767,
+                },
+            ],
+            1706578619408: [
+                {
+                    branch: "HQ - Kuala Lumpur",
+                    fundCategory: "Non Money Market",
+                    fundType: "PRS",
+                    currency: "MYR",
+                    issuingHouse: "KIB",
+                    paymentMethod: "CASH",
+                    investmentAmount: 4566,
+                },
+            ],
+            1706507176288: [
+                {
+                    branch: "Batu Pahat - PW Office",
+                    fundCategory: "Non Money Market",
+                    fundType: "UT",
+                    currency: "MYR",
+                    issuingHouse: "3RD PARTY",
+                    paymentMethod: "EPF",
+                    investmentAmount: 5767,
+                },
+                {
+                    branch: "Batu Pahat - PW Office",
+                    fundCategory: "Non Money Market",
+                    fundType: "UT",
+                    currency: "MYR",
+                    issuingHouse: "3RD PARTY",
+                    paymentMethod: "EPF",
+                    investmentAmount: 5767,
+                },
+
+                {
+                    branch: "HQ - Kuala Lumpur",
+                    fundCategory: "Money Market",
+                    fundType: "UT",
+                    currency: "MYR",
+                    issuingHouse: "3RD PARTY",
+                    paymentMethod: "CASH",
+                    investmentAmount: 132000,
+                },
+                {
+                    branch: "HQ - Kuala Lumpur",
+                    fundCategory: "Money Market",
+                    fundType: "UT",
+                    currency: "MYR",
+                    issuingHouse: "3RD PARTY",
+                    paymentMethod: "CASH",
+                    investmentAmount: 2000,
+                },
+                {
+                    branch: "HQ - Kuala Lumpur",
+                    fundCategory: "Money Market",
+                    fundType: "UT",
+                    currency: "MYR",
+                    issuingHouse: "KIB",
+                    paymentMethod: "CASH",
+                    investmentAmount: 5433,
+                },
+            ],
+            1706507146050: [
+                {
+                    branch: "HQ - Kuala Lumpur",
+                    fundCategory: "Non Money Market",
+                    fundType: "PRS",
+                    currency: "MYR",
+                    issuingHouse: "3RD PARTY",
+                    paymentMethod: "CASH",
+                    investmentAmount: 5677,
+                },
+            ],
+        };
+
+        populateTables(data);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <style>
+        @media print {
+            .page-break {
+                clear: both;
+                page-break-after: always;
+            }
+        }
+
+        @page {
+            margin-top: 70px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            page-break-inside: always;
+        }
+
+        th,
+        td {
+            border: 1px solid rgb(241, 241, 241);
+            border-collapse: collapse;
+        }
+
+        th {
+            padding: 8px 15px 8px 15px;
+        }
+
+        td {
+            padding: 0;
+            text-align: center;
+        }
+
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
+        thead {
+            color: #fff;
+            background-color: black;
+        }
+
+        hr {
+            width: 100%;
+            margin-top: 5px;
+            margin-bottom: 5px;
+            border: none;
+            height: 1px;
+            background-color: #000;
+        }
+
+        .part {
+            display: block;
+        }
+
+        .headertables {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        .report-title {
+            font-style: normal;
+            font-weight: 700;
+            font-size: 20px;
+            line-height: 135%;
+            color: #171717;
+        }
+
+        .even-row {
+            background-color: rgb(211, 211, 211);
+        }
+
+        .currency-list {
+            display: flex;
+            align-items: center;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+
+        .currency-list ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+        }
+
+        .currency-list ul li {
+            margin-right: 10px;
+        }
+
+        .currency-list hr {
+            border: none;
+            border-top: 1px solid #666666;
+            flex-grow: 1;
+            margin-left: 10px;
+        }
+
+        body {
+            font-family: 'Nunito Sans', sans-serif;
+            font-size: 11px;
+            margin: 0 48px;
+        }
+
+        .table-row>td:first-child {
+            border-left: 0.5px solid #333333;
+        }
+
+        .table-row>td:last-child {
+            border-right: 0.5px solid #333333;
+        }
+
+        .table-row>td {
+            border-top: 0.5px solid #333333;
+        }
+
+        .even-row {
+            background-color: rgb(211, 211, 211);
+        }
+
+        .container {
+            width: 100%;
+        }
+
+        .date-currency {
+            font-size: 13px;
+        }
+
+        .value {
+            padding: 8px;
+            border-bottom: 1px solid #bcbcbc;
+            text-align: center;
+        }
+
+        .value:first-child {
+            padding-top: 0;
+        }
+
+        .value:last-child {
+            border-bottom: none;
+        }
+
+        .name {
+            font-weight: bold;
+        }
+
+        .remarks {
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div id="section"></div>
+        <div id="container"></div>
+        <script>
+            let username;
+            let html = ``;
+            let sectionContainer = ``;
+
+            function generateTableHeader() {
+                html += `
+              <thead>
+                  <tr>
+                      <th>No.</th>
+                      <th>User Id</th>
+                      <th>Processing Branch</th>
+                      <th>Date</th>
+                      <th>OMNI Ref No</th>
+                      <th>NTB/ETB</th>
+                      <th>Account Type</th>
+                      <th>Investor A/C No</th>
+                      <th>Investor Name & NRIC</th>
+                      <th>Payment Mode</th>
+                      <th>Payment Ref No</th>
+                      <th>Fund Name</th>
+                      <th>Currency</th>
+                      <th>Amount</th>
+                      <th>Sales Charge %</th>
+                      <th>Advisor Name & Code</th>
+                      <th>BDM</th>
+                      <th>Status</th>
+                      <th>Reroute/Rejection Reason</th>
+                  </tr>
+              </thead>
+          `;
+            }
+            function splitPaymentMode(data, paymentRefNo) {
+                let paymentMode = [];
+                if (data.includes('TT')) {
+                    paymentMode.push(paymentRefNo);
+                }
+                if (data.includes('Cheque')) {
+                    paymentMode.push(paymentRefNo);
+                }
+                return paymentMode;
+            }
+
+            function splitAndBreak(data) {
+                let display
+                if (data.includes(',')) {
+                    display = data.split(", ");
+                } else {
+                    display = [data]
+                }
+                return display
+            }
+
+            function retrieveStatusRemarks(data) {
+                let reportRemarks = ''
+                if (data?.length) {
+                    dataToArray = JSON.parse(data)
+                    let contentArrays = dataToArray.map(obj => obj.content);
+                    let remarks = contentArrays.reduce((acc, arr) => acc.concat(arr), []);
+                    remarks = remarks.join(', ');
+                    let maxLength = 50;
+                    let chunks = [];
+                    for (let i = 0; i < remarks.length; i += maxLength) {
+                        chunks.push(remarks.substring(i, i + maxLength));
+                    }
+                    if (chunks.length) {
+                        reportRemarks = chunks.join("\n")
+                    }
+                }
+                return reportRemarks;
+            }
+
+            function formatNRIC(nric) {
+                let formatedNRIC = ''
+                if (nric) {
+                    formatedNRIC = `(${nric.slice(0, 6)}-${nric.slice(6, 8)}-${nric.slice(8)})`
+                }
+                return formatedNRIC
+            }
+
+            function generateHtml(data) {
+                const branches = new Set();
+                const statuses = new Set();
+                setTimeout(() => {
+                    if (branches) {
+                        html += generateReportHeader(data)
+                    }
+                }, 0)
+
+                const container = document.getElementById("container");
+                for (const [dateString, transactionData] of Object.entries(data)) {
+                    if (dateString) {
+                        html += `<div class="date-currency"><p>${dateString}</p></div>`;
+                        for (const [currency, currencySummary] of Object.entries(
+                            transactionData
+                        )) {
+                            const transactionCurrency = currency.substring(0, 3).toUpperCase()
+                            if (currencySummary?.length > 0) {
+                                html += `<div class="page-break">`
+                                html += `<div  class="currency-list date-currency"><ul><li>${transactionCurrency}</li></ul><hr></div>`;
+                                html += `<table>`
+                                let headerGenerated = false;
+                                if (!headerGenerated) {
+                                    generateTableHeader();
+                                    headerGenerated = true;
+                                }
+                                currencySummary.forEach((summary, index) => {
+                                    if (summary.username) {
+                                        username = summary.username
+                                    }
+                                    const evenOddClass = index % 2 === 0 ? 'odd-row' : 'even-row';
+                                    const {
+                                        userId,
+                                        name,
+                                        lastUpdated,
+                                        omniRef,
+                                        processType,
+                                        accountType,
+                                        accountNo,
+                                        paymentMethod,
+                                        referenceNumber,
+                                        fundName,
+                                        investmentAmount,
+                                        salesCharge,
+                                        bdmName,
+                                        status,
+                                        jointClientName,
+                                        jointClientId,
+                                        singleClientName,
+                                        singleClientId,
+                                        agentName,
+                                        agentCode,
+                                        statusRemarks,
+                                    } = summary;
+                                    const paymentModeString = paymentMethod.includes('TT') ? `TT, ${paymentMethod}` : ` , ${paymentMethod}`
+                                    const clients = jointClientName && jointClientId
+                                        ? [singleClientName, singleClientId, jointClientName, jointClientId]
+                                        : [singleClientName, singleClientId]
+                                    const transactionSalesCharge = splitAndBreak(`${salesCharge ?? ""}, ${salesCharge ?? ""}`)
+                                    const agentInfo = splitAndBreak(`${agentName ?? ""}, ${agentCode ?? ""}`)
+                                    const bdmInfo = splitAndBreak(`${bdmName ?? ""}, ${bdmName ?? ""}`)
+                                    const statusInfo = splitAndBreak(`${status ?? ""}, ${status ?? ""}`)
+                                    const remarks = retrieveStatusRemarks(statusRemarks)
+                                    const paymentRefInfo = splitPaymentMode(paymentMethod, referenceNumber)
+                                    branches.add(name)
+                                    statuses.add(status)
+                                    let dateInDayMonthYear
+                                    if (lastUpdated) {
+                                        const date = new Date(lastUpdated)
+                                        dateInDayMonthYear = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
+                                    }
+
+                                    html += `
+                                  <tr class=${evenOddClass}>
+                                  <td>${index + 1}</td>
+                                  <td>${userId || ""}</td>
+                                  <td>${name}</td>
+                                  <td>${dateInDayMonthYear}</td>
+                                  <td>${omniRef || ""}</td>
+                                  <td>${processType || ""}</td>
+                                  <td>${accountType || ""}</td>
+                                  <td>${accountNo || ""}</td>
+                                  <td><div class="value name" style="border-bottom: none;">${clients[0] || ""}</div>
+                                      <div class="value" style="border-bottom: none">${formatNRIC(clients[1]) || ""}</div>
+                                      <div class="value" style="border-bottom: none">${clients[2] || ""}</div>
+                                      <div class="value">${formatNRIC(clients[3]) || ""}</div>
+                                  </td>
+                                  <td><div class="value">TT</div>
+                                  <div class="value">Cheque</div></td>
+                                  <td><div class="value" >${paymentRefInfo[0] || ""}</div>
+                                      <div class="value">${paymentRefInfo[1] || ""}</div></td>
+                                  <td>${fundName}</td>
+                                  <td>${transactionCurrency}</td>
+                                  <td>${investmentAmount}</td>
+                                  <td><div class="value" >${transactionSalesCharge[0] || ""}</div>
+                                      <div class="value">${transactionSalesCharge[1] || ""}</div></td></td>
+                                  <td><div class="value name" >${agentInfo[0] || ""}</div>
+                                      <div class="value">${agentInfo[1] || ""}</div></td>
+                                  <td><div class="value name" >${bdmInfo[0] || ""}</div>
+                                      <div class="value name">${bdmInfo[1] || ""}</div></td>
+                                  <td id="originalContent5"><div class="value" >${statusInfo[0] || ""}</div>
+                                      <div class="value">${statusInfo[1] || ""}</div></td>
+                                  <td><div class="remarks">${remarks}</div></td >
+                                      <tr />
+                                      `;
+                                });
+                            }
+                            html += `</table ></div>`
+                        }
+                    }
+
+                }
+                container.innerHTML += html;
+            }
+
+            const reportMetaData = (data) => {
+                let dateRange
+                let branches
+                let statuses
+                for (const [dateString, statisticsData] of Object.entries(data)) {
+                    statisticsData.forEach((data) => {
+                        if (data?.dateRange?.length) dateRange = data.dateRange
+                        if (data?.branches?.length) branches = data.branches
+                        if (data?.statuses?.length) statuses = data.statuses
+                    })
+                    if (dateRange && branches && statuses) {
+                        break;
+                    }
+                }
+                const range = parseDateRange(dateRange)
+                return [range, branches, statuses]
+            }
+
+            parseDateRange = (dateString) => {
+                const dateParts = dateString.split('~')
+                const ddmmyy = dateParts.map((part) => {
+                    const date = new Date(Number(part))
+                    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
+                })
+                return {
+                    start: ddmmyy[0],
+                    end: ddmmyy[1],
+                }
+            }
+            function generateReportHeader(data) {
+                const metaData = reportMetaData(reportData)
+                const generalInfoSection = document.getElementById("section");
+                sectionContainer += `<p class="report-title" > Sales Submission Statistic Details Report</p >
+                                      <div class="headertables">
+                                          <table>
+                                              <tr>
+                                                  <th style=" font-size: 14px; background-color: #f8f8f8; font-weight: 600; text-align:left; width:150px;">Date Range</th>
+                                                  <td style="text-align:left; font-size:13px; padding-left: 10px;"><p>${metaData[0].start} - ${metaData[0].end}</p></td>
+                                              </tr>
+                                              <tr>
+                                                  <th style="font-size: 14px; background-color: #f8f8f8; font-weight: 600; text-align:left; width:150px">Processing Branch</th>
+                                                  <td style="text-align:left; font-size:13px; padding-left: 10px;">${metaData[1].join('  ,')}</td>
+                                              </tr>
+                                          </table>
+                                          <table style="margin-left: 10px">
+                                              <tr>
+                                                  <th style=" font-size: 14px; background-color: #f8f8f8; font-weight: 600; text-align:left; width:150px">User Id</th>
+                                                  <td style="text-align:left; font-size:13px; padding-left: 10px;"><p>${username}</p></td>
+                                              </tr>
+                                              <tr>
+                                                  <th style=" font-size: 14px; background-color: #f8f8f8; font-weight: 600; text-align:left; width:150px;">Status</th>
+                                                  <td style="text-align:left; font-size:13px; padding-left: 10px;">${metaData[2].join('  ,')}</td>
+                                              </tr>
+                                          </table>
+                                      </div>`;
+                generalInfoSection.innerHTML += sectionContainer;
+            }
+
+            const reportData = {
+                "27/3/2024": [
+                    {
+                        "name": "HQ - Kuala Lumpur",
+                        "lastUpdated": 1711506017610,
+                        "transactionRef": "S0327A010",
+                        "accountType": "INDIVIDUAL",
+                        "accountNo": null,
+                        "fundName": "AMP 1",
+                        "fundType": "AMP",
+                        "currency": "MYR",
+                        "investmentAmount": 5000,
+                        "salesCharge": 1.5,
+                        "agentName": "Wan Syafiq",
+                        "agentCode": "678910",
+                        "bdmName": null,
+                        "paymentMethod": "Online Banking / TT / ATM",
+                        "referenceNumber": "RE1233433",
+                        "status": "Pending",
+                        "singleClientName": "Sikang",
+                        "jointClientName": null,
+                        "singleClientId": "950102092134",
+                        "jointClientId": null,
+                        "userId": null,
+                        "statusRemarks": null,
+                        "omniRef": "24AA0053S0327A010",
+                        "processType": "NTB",
+                        "dateRange": "1709136000000~1711555199999",
+                        "username": "bh.aa",
+                        "statuses": [
+                            [
+                                "Completed",
+                                "In review",
+                                "Pending",
+                                "Rejected"
+                            ]
+                        ],
+                        "branches": [
+                            [
+                                "Batu Pahat - PW Office",
+                                "Damansara Uptown",
+                                "HQ - Kuala Lumpur",
+                                "Ipoh",
+                                "Johor Bahru",
+                                "Klang",
+                                "Kluang",
+                                "Kota Damansara",
+                                "Kota Kinabalu",
+                                "Kuantan",
+                                "Kuching",
+                                "Kuching - PW Office",
+                                "Melaka",
+                                "Miri",
+                                "Penang",
+                                "Seremban"
+                            ]
+                        ]
+                    },
+                    {
+                        "name": "HQ - Kuala Lumpur",
+                        "lastUpdated": 1711506017610,
+                        "transactionRef": "S0327A011",
+                        "accountType": "INDIVIDUAL",
+                        "accountNo": null,
+                        "fundName": "KENANGA SHARIAH ONEPRS GROWTH FUND",
+                        "fundType": "PRS",
+                        "currency": "MYR",
+                        "investmentAmount": 1000,
+                        "salesCharge": 1.5,
+                        "agentName": "Wan Syafiq",
+                        "agentCode": "678910",
+                        "bdmName": null,
+                        "paymentMethod": "Online Banking / TT / ATM",
+                        "referenceNumber": "EA88990088",
+                        "status": "Pending",
+                        "singleClientName": "Sikang",
+                        "jointClientName": null,
+                        "singleClientId": "950102092134",
+                        "jointClientId": null,
+                        "userId": null,
+                        "statusRemarks": null,
+                        "omniRef": "24AA0054S0327A011",
+                        "processType": "NTB"
+                    },
+                    {
+                        "name": "HQ - Kuala Lumpur",
+                        "lastUpdated": 1711505480375,
+                        "transactionRef": "S0327A007",
+                        "accountType": "INDIVIDUAL",
+                        "accountNo": null,
+                        "fundName": "MAYBANK GLOBAL MIXED ASSETS-I FUND",
+                        "fundType": "UTF",
+                        "currency": "AUD",
+                        "investmentAmount": 1000,
+                        "salesCharge": 1.5,
+                        "agentName": "Wan Syafiq",
+                        "agentCode": "678910",
+                        "bdmName": null,
+                        "paymentMethod": "Online Banking / TT / ATM",
+                        "referenceNumber": "Ea0000122",
+                        "status": "Pending",
+                        "singleClientName": "Pari",
+                        "jointClientName": null,
+                        "singleClientId": "890102147689",
+                        "jointClientId": null,
+                        "userId": null,
+                        "statusRemarks": null,
+                        "omniRef": "24AA0051S0327A007",
+                        "processType": "NTB"
+                    },
+                    {
+                        "name": "HQ - Kuala Lumpur",
+                        "lastUpdated": 1711505480375,
+                        "transactionRef": "S0327A007",
+                        "accountType": "INDIVIDUAL",
+                        "accountNo": null,
+                        "fundName": "MAYBANK GLOBAL MIXED ASSETS-I FUND",
+                        "fundType": "UTF",
+                        "currency": "AUD",
+                        "investmentAmount": 1000,
+                        "salesCharge": 1.5,
+                        "agentName": "Wan Syafiq",
+                        "agentCode": "678910",
+                        "bdmName": null,
+                        "paymentMethod": "Online Banking / TT / ATM",
+                        "referenceNumber": "EA00988900099",
+                        "status": "Pending",
+                        "singleClientName": "Pari",
+                        "jointClientName": null,
+                        "singleClientId": "890102147689",
+                        "jointClientId": null,
+                        "userId": null,
+                        "statusRemarks": null,
+                        "omniRef": "24AA0051S0327A007",
+                        "processType": "NTB"
+                    },
+                    {
+                        "name": "HQ - Kuala Lumpur",
+                        "lastUpdated": 1711505480375,
+                        "transactionRef": "S0327A007",
+                        "accountType": "INDIVIDUAL",
+                        "accountNo": null,
+                        "fundName": "MAYBANK GLOBAL MIXED ASSETS-I FUND",
+                        "fundType": "UTF",
+                        "currency": "AUD",
+                        "investmentAmount": 1000,
+                        "salesCharge": 1.5,
+                        "agentName": "Wan Syafiq",
+                        "agentCode": "678910",
+                        "bdmName": null,
+                        "paymentMethod": "Online Banking / TT / ATM",
+                        "referenceNumber": "EA2122333",
+                        "status": "Pending",
+                        "singleClientName": "Pari",
+                        "jointClientName": null,
+                        "singleClientId": "890102147689",
+                        "jointClientId": null,
+                        "userId": null,
+                        "statusRemarks": null,
+                        "omniRef": "24AA0051S0327A007",
+                        "processType": "NTB"
+                    },
+                    {
+                        "name": "HQ - Kuala Lumpur",
+                        "lastUpdated": 1711505480375,
+                        "transactionRef": "S0327A007",
+                        "accountType": "INDIVIDUAL",
+                        "accountNo": null,
+                        "fundName": "TEMPLETON GLOBAL TOTAL RETURN FUND",
+                        "fundType": "WSF",
+                        "currency": "USD",
+                        "investmentAmount": 10000,
+                        "salesCharge": 1.5,
+                        "agentName": "Wan Syafiq",
+                        "agentCode": "678910",
+                        "bdmName": null,
+                        "paymentMethod": "Online Banking / TT / ATM",
+                        "referenceNumber": "Ea0000122",
+                        "status": "Pending",
+                        "singleClientName": "Pari",
+                        "jointClientName": null,
+                        "singleClientId": "890102147689",
+                        "jointClientId": null,
+                        "userId": null,
+                        "statusRemarks": null,
+                        "omniRef": "24AA0051S0327A007",
+                        "processType": "NTB"
+                    },
+                    {
+                        "name": "HQ - Kuala Lumpur",
+                        "lastUpdated": 1711505480375,
+                        "transactionRef": "S0327A007",
+                        "accountType": "INDIVIDUAL",
+                        "accountNo": null,
+                        "fundName": "TEMPLETON GLOBAL TOTAL RETURN FUND",
+                        "fundType": "WSF",
+                        "currency": "USD",
+                        "investmentAmount": 10000,
+                        "salesCharge": 1.5,
+                        "agentName": "Wan Syafiq",
+                        "agentCode": "678910",
+                        "bdmName": null,
+                        "paymentMethod": "Online Banking / TT / ATM",
+                        "referenceNumber": "EA00988900099",
+                        "status": "Pending",
+                        "singleClientName": "Pari",
+                        "jointClientName": null,
+                        "singleClientId": "890102147689",
+                        "jointClientId": null,
+                        "userId": null,
+                        "statusRemarks": null,
+                        "omniRef": "24AA0051S0327A007",
+                        "processType": "NTB"
+                    },
+                    {
+                        "name": "HQ - Kuala Lumpur",
+                        "lastUpdated": 1711505480375,
+                        "transactionRef": "S0327A007",
+                        "accountType": "INDIVIDUAL",
+                        "accountNo": null,
+                        "fundName": "TEMPLETON GLOBAL TOTAL RETURN FUND",
+                        "fundType": "WSF",
+                        "currency": "USD",
+                        "investmentAmount": 10000,
+                        "salesCharge": 1.5,
+                        "agentName": "Wan Syafiq",
+                        "agentCode": "678910",
+                        "bdmName": null,
+                        "paymentMethod": "Online Banking / TT / ATM",
+                        "referenceNumber": "EA2122333",
+                        "status": "Pending",
+                        "singleClientName": "Pari",
+                        "jointClientName": null,
+                        "singleClientId": "890102147689",
+                        "jointClientId": null,
+                        "userId": null,
+                        "statusRemarks": null,
+                        "omniRef": "24AA0051S0327A007",
+                        "processType": "NTB"
+                    },
+                    {
+                        "name": "HQ - Kuala Lumpur",
+                        "lastUpdated": 1711504443835,
+                        "transactionRef": "S0327A006",
+                        "accountType": "INDIVIDUAL",
+                        "accountNo": null,
+                        "fundName": "AMINCOME PLUS",
+                        "fundType": "UTF",
+                        "currency": "MYR",
+                        "investmentAmount": 6155616,
+                        "salesCharge": 1.5,
+                        "agentName": "Ahmad Sofwan",
+                        "agentCode": "1004002",
+                        "bdmName": "Bdm Dummy",
+                        "paymentMethod": "Client Trust Account (CTA)",
+                        "referenceNumber": "24AA004901711504443282",
+                        "status": "Pending",
+                        "singleClientName": "Utcashcaknaasatu",
+                        "jointClientName": null,
+                        "singleClientId": "781122084511",
+                        "jointClientId": null,
+                        "userId": null,
+                        "statusRemarks": null,
+                        "omniRef": "24AA0049S0327A006",
+                        "processType": "ETB"
+                    },
+                    {
+                        "name": "HQ - Kuala Lumpur",
+                        "lastUpdated": 1711503978213,
+                        "transactionRef": "S0327A002",
+                        "accountType": "JOINT",
+                        "accountNo": null,
+                        "fundName": "KENANGA PRINCIPAL PROTECTED INCOME 2 FUND",
+                        "fundType": "WSF",
+                        "currency": "MYR",
+                        "investmentAmount": 5000000,
+                        "salesCharge": 0,
+                        "agentName": "Wan Syafiq",
+                        "agentCode": "678910",
+                        "bdmName": null,
+                        "paymentMethod": "Online Banking / TT / ATM",
+                        "referenceNumber": "Ea884885",
+                        "status": "Completed",
+                        "singleClientName": "Jerung",
+                        "jointClientName": "Shark",
+                        "singleClientId": "800221146789",
+                        "jointClientId": "810912107689",
+                        "userId": "qb.ckr",
+                        "statusRemarks": null,
+                        "omniRef": "24AA0044S0327A002",
+                        "processType": "NTB"
+                    },
+                    {
+                        "name": "HQ - Kuala Lumpur",
+                        "lastUpdated": 1711503706616,
+                        "transactionRef": "S0327A001",
+                        "accountType": "INDIVIDUAL",
+                        "accountNo": null,
+                        "fundName": "KENANGA PRINCIPAL PROTECTED INCOME FUND",
+                        "fundType": "WSF",
+                        "currency": "MYR",
+                        "investmentAmount": 1000000,
+                        "salesCharge": 0,
+                        "agentName": "Wan Syafiq",
+                        "agentCode": "678910",
+                        "bdmName": null,
+                        "paymentMethod": "Online Banking / TT / ATM",
+                        "referenceNumber": "Ea129393938",
+                        "status": "Completed",
+                        "singleClientName": "Loban",
+                        "jointClientName": null,
+                        "singleClientId": "900228105689",
+                        "jointClientId": null,
+                        "userId": "qb.ckr",
+                        "statusRemarks": null,
+                        "omniRef": "24AA0043S0327A001",
+                        "processType": "NTB"
+                    },
+                    {
+                        "name": "HQ - Kuala Lumpur",
+                        "lastUpdated": 1711510594748,
+                        "transactionRef": "S1216A004",
+                        "accountType": "INDIVIDUAL",
+                        "accountNo": null,
+                        "fundName": "KENANGA DANA SAFA",
+                        "fundType": "WSF",
+                        "currency": "MYR",
+                        "investmentAmount": 566666,
+                        "salesCharge": 0,
+                        "agentName": "Ahmad Sofwan",
+                        "agentCode": "1004002",
+                        "bdmName": "Bdm Dummy",
+                        "paymentMethod": "Client Trust Account (CTA)",
+                        "referenceNumber": "23AA113701702635118646",
+                        "status": "In review",
+                        "singleClientName": "Aiskosong",
+                        "jointClientName": null,
+                        "singleClientId": "G1011127636",
+                        "jointClientId": null,
+                        "userId": "fh.aa",
+                        "statusRemarks": null,
+                        "omniRef": "23AA1137S1216A004",
+                        "processType": "ETB"
+                    },
+                    {
+                        "name": "HQ - Kuala Lumpur",
+                        "lastUpdated": 1711510594748,
+                        "transactionRef": "S0713A004",
+                        "accountType": "INDIVIDUAL",
+                        "accountNo": null,
+                        "fundName": "KENANGA CASH PLUS FUND",
+                        "fundType": "UTF",
+                        "currency": "MYR",
+                        "investmentAmount": 10000,
+                        "salesCharge": 0,
+                        "agentName": "LORRAINE KHOO BEE KIM-VKA CUTA",
+                        "agentCode": "01505591",
+                        "bdmName": "MICHELLE WONG WEE LENG",
+                        "paymentMethod": "Online Banking / TT / ATM",
+                        "referenceNumber": "Tgybyb",
+                        "status": "In review",
+                        "singleClientName": "Agnes ",
+                        "jointClientName": null,
+                        "singleClientId": "880909125588",
+                        "jointClientId": null,
+                        "userId": "fh.aa",
+                        "statusRemarks": null,
+                        "omniRef": "23AA0535S0713A004",
+                        "processType": "ETB"
+                    }
+                ],
+                "26/3/2024": [
+                    {
+                        "name": "HQ - Kuala Lumpur",
+                        "lastUpdated": 1711451550906,
+                        "transactionRef": "S0118A006",
+                        "accountType": "INDIVIDUAL",
+                        "accountNo": null,
+                        "fundName": "KENANGA ONEPRS GROWTH FUND",
+                        "fundType": "PRS",
+                        "currency": "MYR",
+                        "investmentAmount": 1000,
+                        "salesCharge": 1.5,
+                        "agentName": "Ema Agent",
+                        "agentCode": "178910",
+                        "bdmName": null,
+                        "paymentMethod": "Online Banking / TT / ATM",
+                        "referenceNumber": "4689",
+                        "status": "Completed",
+                        "singleClientName": "Nithin John",
+                        "jointClientName": null,
+                        "singleClientId": "990908101019",
+                        "jointClientId": null,
+                        "userId": "qh.aa",
+                        "statusRemarks": null,
+                        "omniRef": "23AA0062S0118A006",
+                        "processType": "NTB"
+                    }
+                ],
+                "19/3/2024": [
+                    {
+                        "name": "HQ - Kuala Lumpur",
+                        "lastUpdated": 1710816902636,
+                        "transactionRef": "S0319A011",
+                        "accountType": "INDIVIDUAL",
+                        "accountNo": null,
+                        "fundName": "KENANGA INCOME PLUS FUND",
+                        "fundType": "UTF",
+                        "currency": "MYR",
+                        "investmentAmount": 1000,
+                        "salesCharge": 1.5,
+                        "agentName": "Wan Syafiq",
+                        "agentCode": "678910",
+                        "bdmName": null,
+                        "paymentMethod": "Online Banking / TT / ATM",
+                        "referenceNumber": "E09192838",
+                        "status": "Completed",
+                        "singleClientName": "Keli",
+                        "jointClientName": null,
+                        "singleClientId": "900414146889",
+                        "jointClientId": null,
+                        "userId": "qb.aa",
+                        "statusRemarks": null,
+                        "omniRef": "24AA0040S0319A011",
+                        "processType": "NTB"
+                    }
+                ],
+                "11/3/2024": [
+                    {
+                        "name": "HQ - Kuala Lumpur",
+                        "lastUpdated": 1710146405442,
+                        "transactionRef": "S0312A001",
+                        "accountType": "INDIVIDUAL",
+                        "accountNo": null,
+                        "fundName": "KENANGA PRINCIPAL PROTECTED INCOME FUND",
+                        "fundType": "WSF",
+                        "currency": "MYR",
+                        "investmentAmount": 200000,
+                        "salesCharge": 0,
+                        "agentName": "Khoo Xun Rong",
+                        "agentCode": "01506851",
+                        "bdmName": "Michelle Wong Wee Leng",
+                        "paymentMethod": "Online Banking / TT / ATM",
+                        "referenceNumber": "rdtfyg123",
+                        "status": "Pending",
+                        "singleClientName": "adam",
+                        "jointClientName": null,
+                        "singleClientId": "980202020229",
+                        "jointClientId": null,
+                        "userId": null,
+                        "statusRemarks": null,
+                        "omniRef": "24AA0038S0312A001",
+                        "processType": "ETB"
+                    }
+                ]
+            }
+
+
+
+            function groupDataByCurrency() {
+                const data = { ...reportData }
+                const groupedData = {}
+                if (Object.keys.length > 0) {
+                    for (const [lastUpdated, transactionDataByCurrency] of Object.entries(data)) {
+                        const dateString = lastUpdated
+                        if (!groupedData[dateString]) {
+                            groupedData[dateString] = {
+                                usdMarket: [],
+                                myrMarket: [],
+                                eurMarket: [],
+                                gbpMarket: [],
+                                audMarket: [],
+                                sgdMarket: [],
+                                rmbMarket: [],
+                                jpyMarket: [],
+                            }
+                        }
+                        transactionDataByCurrency.forEach((sale) => {
+                            this.classifySalesByCurrency(sale, groupedData, dateString)
+                        })
+                    }
+                }
+                return groupedData
+            }
+
+            function classifySalesByCurrency(
+                sale,
+                groupedData,
+                dateString
+            ) {
+                const salesByCurency = {
+                    myrMarket: 'myrMarket',
+                    usdMarket: 'usdMarket',
+                    eurMarket: 'eurMarket',
+                    gbpMarket: 'gbpMarket',
+                    audMarket: 'audMarket',
+                    sgdMarket: 'sgdMarket',
+                    rmbMarket: 'rmbMarket',
+                    jpyMarket: 'jpyMarket',
+                }
+                const currency = sale.currency.toUpperCase()
+                let marketType
+                const { myrMarket, usdMarket, eurMarket, gbpMarket, audMarket, sgdMarket, rmbMarket, jpyMarket } = salesByCurency
+                switch (currency) {
+                    case 'USD':
+                        marketType = usdMarket
+                        break
+                    case 'MYR':
+                        marketType = myrMarket
+                        break
+                    case 'EUR':
+                        marketType = eurMarket
+                        break
+                    case 'GBP':
+                        marketType = gbpMarket
+                        break
+                    case 'AUD':
+                        marketType = audMarket
+                        break
+                    case 'SGD':
+                        marketType = sgdMarket
+                        break
+                    case 'RMB':
+                        marketType = rmbMarket
+                        break
+                    case 'JPY':
+                        marketType = jpyMarket
+                        break
+                    default:
+                        break
+                }
+
+                if (marketType) {
+                    groupedData[dateString][marketType].push({
+                        ...sale,
+                        dateString,
+                    })
+                }
+                return groupedData
+            }
+            const data = groupDataByCurrency()
+            generateHtml(data);
+        </script>
+    </div>
+</body>
+
+</html>

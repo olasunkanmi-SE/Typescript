@@ -135,7 +135,8 @@ class Test extends SolanoPlayGround {
   }
   async drop(): Promise<string> {
     const publicKey = this.getSenderPublicKey();
-    return await this.airDrop(publicKey);
+    const airDrop = await this.airDrop(publicKey);
+    return airDrop;
   }
 }
 const test = new Test();

@@ -1,0 +1,1017 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <style>
+        @media print {
+            .pagebreak {
+                clear: both;
+                page-break-after: always;
+            }
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th,
+        td {
+            border: 1px solid rgb(241, 241, 241);
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 8px 15px 8px 15px;
+            text-align: center;
+        }
+
+        thead {
+            color: #fff;
+            background-color: black;
+        }
+
+        body {
+            font-family: "Helvetica";
+            font-size: 8px;
+            font-weight: 400;
+            letter-spacing: -0.33px;
+        }
+
+        hr {
+            width: 100%;
+            margin-top: 5px;
+            margin-bottom: 5px;
+            border: none;
+            height: 1px;
+            background-color: #000;
+        }
+
+        .part {
+            display: block;
+        }
+
+        .headertables {
+            display: flex;
+            justify-content: space-between;
+            width: 100%
+        }
+    </style>
+</head>
+
+<body>
+    <div id="section"></div>
+    <div id="container"></div>
+    <script>
+        let html = ``;
+        let sectionContainer = ``;
+
+        function generateTableHeader() {
+            html += `
+        <thead>
+            <tr>
+                <th>No.</th>
+                <th>User Id</th>
+                <th>Processing Branch</th>
+                <th>Date</th>
+                <th>OMNI Ref No</th>
+                <th>NTB/ETB</th>
+                <th>Account Type</th>
+                <th>Investor A/C No</th>
+                <th>Investor Name & NRIC</th>
+                <th>Payment Mode</th>
+                <th>Payment Ref No</th>
+                <th>Fund Name</th>
+                <th>Currency</th>
+                <th>Amount</th>
+                <th>Sales Charge %</th>
+                <th>Advisor Name & Code</th>
+                <th>BDM</th>
+                <th>Status</th>
+                <th>Reroute/Rejection Reason</th>
+            </tr>
+        </thead>
+    `;
+        }
+        function splitPaymentMode(data) {
+            if (data.includes('TT')) {
+                const parts = data.split(", ");
+                partOne = parts[0]
+                partTwo = parts[1]
+                return `${partOne} <hr> ${partTwo}`
+            }
+            return data
+        }
+
+        function splitAndBreak(data) {
+            const parts = data.split(", ");
+            partOne = parts[0]
+            partTwo = parts[1]
+            return `${partOne} <hr> ${partTwo}`
+        }
+
+        function generateHtml(data) {
+            const branches = new Set();
+            const statuses = new Set();
+            setTimeout(() => {
+                if (branches) {
+                    html += generateReportHeader(data, branches, statuses)
+                }
+            }, 1000)
+
+            const container = document.getElementById("container");
+            for (const [dateString, transactionData] of Object.entries(data)) {
+                if (dateString) {
+                    html += `<p>${dateString}</p>`;
+                    for (const [currency, currencySummary] of Object.entries(
+                        transactionData
+                    )) {
+                        if (currencySummary?.length > 0) {
+                            html += `<span><p>${currency.substring(0, 3).toUpperCase()}</p></span>`;
+                            html += `<table>`
+                            let headerGenerated = false;
+                            if (!headerGenerated) {
+                                generateTableHeader();
+                                headerGenerated = true;
+                            }
+                            currencySummary.forEach((summary, index) => {
+
+                                const {
+                                    userId,
+                                    name,
+                                    lastUpdated,
+                                    omniRef,
+                                    processType,
+                                    accountType,
+                                    accountNo,
+                                    paymentMethod,
+                                    referenceNumber,
+                                    fundName,
+                                    investmentAmount,
+                                    salesCharge,
+                                    bdmName,
+                                    status,
+                                    jointClientName,
+                                    jointClientNric,
+                                    singleClientName,
+                                    singleClientNric,
+                                    agentName,
+                                    agentCode,
+                                    statusRemark,
+                                } = summary;
+                                const paymentModeString = paymentMethod.includes('TT') ? `TT, ${paymentMethod}` : ` , ${paymentMethod}`
+                                branches.add(name)
+                                statuses.add(status)
+                                let dateInDayMonthYear
+                                if (lastUpdated) {
+                                    const date = new Date(lastUpdated)
+                                    dateInDayMonthYear = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
+                                }
+
+                                html += `
+                            <tr>
+                            <td>${index + 1}</td>
+                            <td>${userId}</td>
+                            <td>${name}</td>
+                            <td>${dateInDayMonthYear}</td>
+                            <td>${omniRef}</td>
+                            <td>${processType}</td>
+                            <td>${accountType}</td>
+                            <td>${accountNo}</td>
+                            <td>${splitAndBreak('Edgar Constantine (88080-88-1234), Winston (88080-88-1234)')}</td>
+                            <td>${splitPaymentMode(paymentModeString)}</td >
+
+                            <td>${splitAndBreak(`${referenceNumber}, ${referenceNumber}`)}</td>
+
+                            <td>Kenanga Global Islamic Fund</td>
+                            <td>MYR</td>
+                            <td>20,000.00</td>
+                            <td>${splitAndBreak(`${salesCharge}, ${salesCharge}`)}</td>
+                            <td>${splitAndBreak(`${agentName}, ${agentCode}`)}</td>
+                            <td>${splitAndBreak(`${bdmName}, ${bdmName}`)}</td>
+                            <td id="originalContent5">${splitAndBreak(`${status}, ${status}`)}</td>
+                                    <td td td id = "originalContent6" > ${splitAndBreak(`${statusRemark ?? '-'}, ${statusRemark ?? '-'}`)}</td >
+                                <tr />
+                                `;
+                            });
+                        }
+                        html += `</table > `
+                    }
+                }
+
+            }
+            container.innerHTML += html;
+        }
+
+        getDateRange = (data) => {
+            const dates = Object.keys(data)
+            let intialDate;
+            let lastDate;
+            if (dates?.length) {
+                intialDate = dates[0]
+                lastDate = dates[dates.length - 1]
+            }
+            return { intialDate, lastDate }
+        }
+
+        function generateReportHeader(data, branches, statuses) {
+            const dateRange = getDateRange(data)
+            console.log(dateRange)
+            const generalInfoSection = document.getElementById("section");
+            sectionContainer += `<p p style = "font-size: 10px; font-weight: 400" > Sales Submission Statistic Details Report</p >
+                                <div class="headertables">
+                                    <table>
+                                        <tr>
+                                            <th style="font-size: 10px; background-color: #f8f8f8; font-weight: 400; text-align:left;">Date Range</th>
+                                            <td style="font-size: 10px; font-weight: 300; text-align:left; line-height:0px"><p>${dateRange.intialDate} - ${dateRange.lastDate}</p></td>
+                                        </tr>
+                                        <tr>
+                                            <th style="font-size: 10px; background-color: #f8f8f8; font-weight: 400; text-align:left;">Processing Branch</th>
+                                            <td style="font-size: 10px; font-weight: 300; text-align:left; line-height:0px">${Array.from(branches).join(' , ')}</td>
+                                        </tr>
+                                    </table>
+                                    <table style="margin-left: 10px">
+                                        <tr>
+                                            <th style="font-size: 10px; background-color: #f8f8f8; font-weight: 400; text-align:left;">Date Range</th>
+                                            <td style="font-size: 10px; font-weight: 300; text-align:left; line-height:0px"><p>'UserId'</p></td>
+                                        </tr>
+                                        <tr>
+                                            <th style="font-size: 10px; background-color: #f8f8f8; font-weight: 400; text-align:left;">Processing Branch</th>
+                                            <td style="font-size: 10px; font-weight: 300; text-align:left; line-height:0px">${Array.from(statuses).join(' , ')}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                      `;
+            generalInfoSection.innerHTML += sectionContainer;
+        }
+
+        const reportData = {
+            '5/1/2024': [
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704443203682,
+                    transactionRef: 'S0105A023',
+                    accountType: 'JOINT',
+                    accountNo: 'TOMS00022',
+                    fundName: 'RHB AMERICAN INCOME FUND',
+                    currency: 'AUD',
+                    investmentAmount: 2333,
+                    salesCharge: 3,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Online Banking / TT / ATM',
+                    referenceNumber: 'AS52562672762',
+                    status: 'In review',
+                    singleClientName: 'Arume',
+                    jointClientName: 'Poll east',
+                    singleClientNric: 'Army',
+                    jointClientNric: 'Police',
+                    userId: 'automationBA',
+                    omniRef: '24AA0058S0105A023',
+                    processType: 'ETB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704443203682,
+                    transactionRef: 'S0105A023',
+                    accountType: 'JOINT',
+                    accountNo: 'TOMS00036',
+                    fundName: 'RHB AMERICAN INCOME FUND',
+                    currency: 'SGD',
+                    investmentAmount: 2333,
+                    salesCharge: 3,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Online Banking / TT / ATM',
+                    referenceNumber: 'AS52562672762',
+                    status: 'In review',
+                    singleClientName: 'Fatim',
+                    jointClientName: null,
+                    singleClientNric: 'NRIC',
+                    jointClientNric: null,
+                    userId: 'automationBA',
+                    omniRef: '24AA0058S0105A023',
+                    processType: 'ETB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704443203682,
+                    transactionRef: 'S0105A023',
+                    accountType: 'JOINT',
+                    accountNo: 'TOMS00022',
+                    fundName: 'RHB AMERICAN INCOME FUND',
+                    currency: 'AUD',
+                    investmentAmount: 2333,
+                    salesCharge: 3,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Online Banking / TT / ATM',
+                    referenceNumber: 'AS52562672762',
+                    status: 'In review',
+                    singleClientName: 'Arume',
+                    jointClientName: 'Poll east',
+                    singleClientNric: 'Army',
+                    jointClientNric: 'Police',
+                    userId: 'automationBA',
+                    omniRef: '24AA0058S0105A023',
+                    processType: 'ETB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704443203682,
+                    transactionRef: 'S0105A023',
+                    accountType: 'JOINT',
+                    accountNo: 'TOMS00036',
+                    fundName: 'RHB AMERICAN INCOME FUND',
+                    currency: 'SGD',
+                    investmentAmount: 2333,
+                    salesCharge: 3,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Online Banking / TT / ATM',
+                    referenceNumber: 'AS52562672762',
+                    status: 'In review',
+                    singleClientName: 'Fatim',
+                    jointClientName: null,
+                    singleClientNric: 'NRIC',
+                    jointClientNric: null,
+                    userId: 'automationBA',
+                    omniRef: '24AA0058S0105A023',
+                    processType: 'ETB'
+                }
+            ],
+            '4/1/2024': [
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704332337121,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'TOMS00046',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'MYR',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'WanthreeSevun',
+                    jointClientName: null,
+                    singleClientNric: 'NRIC',
+                    jointClientNric: null,
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704332337121,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'TOMS00100',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'USD',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'Hanif ',
+                    jointClientName: null,
+                    singleClientNric: 'Passport',
+                    jointClientNric: null,
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704332337121,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'TOMS00022',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'MYR',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'Arume',
+                    jointClientName: 'Poll east',
+                    singleClientNric: 'Army',
+                    jointClientNric: 'Police',
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704332337121,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'TOMS00036',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'MYR',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'Fatim',
+                    jointClientName: null,
+                    singleClientNric: 'NRIC',
+                    jointClientNric: null,
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704332337121,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'TOMS00046',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'RMB',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'WanthreeSevun',
+                    jointClientName: null,
+                    singleClientNric: 'NRIC',
+                    jointClientNric: null,
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704332337121,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'TOMS00100',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'JPY',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'Hanif ',
+                    jointClientName: null,
+                    singleClientNric: 'Passport',
+                    jointClientNric: null,
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704332337121,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'RJ3010001',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'MYR',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'Nur Ayesha Binti Ahmad Nawab',
+                    jointClientName: 'Mohd Zahid Bin Mohammad',
+                    singleClientNric: 'NRIC',
+                    jointClientNric: 'NRIC',
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704332337121,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'RQ400440',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'AUD',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'Nathan Goh',
+                    jointClientName: 'Mariah',
+                    singleClientNric: 'Passport',
+                    jointClientNric: 'NRIC',
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704332337121,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'RP500120',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'MYR',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'Zaitun Samion',
+                    jointClientName: null,
+                    singleClientNric: 'NRIC',
+                    jointClientNric: null,
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704332337121,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'PR600121',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'USD',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'Zairul',
+                    jointClientName: null,
+                    singleClientNric: 'Army',
+                    jointClientNric: null,
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704332337121,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'EI2011113',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'MYR',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'Michelle Goh',
+                    jointClientName: null,
+                    singleClientNric: 'Passport',
+                    jointClientNric: null,
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704332337121,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'EP201114',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'EUR',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'Natasha Khairul',
+                    jointClientName: null,
+                    singleClientNric: 'NRIC',
+                    jointClientNric: null,
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704332337121,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'TOMS00046',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'MYR',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'WanthreeSevun',
+                    jointClientName: null,
+                    singleClientNric: 'NRIC',
+                    jointClientNric: null,
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704332337121,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'TOMS00100',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'USD',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'Hanif ',
+                    jointClientName: null,
+                    singleClientNric: 'Passport',
+                    jointClientNric: null,
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704332337121,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'TOMS00022',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'MYR',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'Arume',
+                    jointClientName: 'Poll east',
+                    singleClientNric: 'Army',
+                    jointClientNric: 'Police',
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704332337121,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'TOMS00036',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'MYR',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'Fatim',
+                    jointClientName: null,
+                    singleClientNric: 'NRIC',
+                    jointClientNric: null,
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704332337121,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'TOMS00046',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'RMB',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'WanthreeSevun',
+                    jointClientName: null,
+                    singleClientNric: 'NRIC',
+                    jointClientNric: null,
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704332337121,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'TOMS00100',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'JPY',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'Hanif ',
+                    jointClientName: null,
+                    singleClientNric: 'Passport',
+                    jointClientNric: null,
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1704332337121,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'RJ3010001',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'MYR',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'Nur Ayesha Binti Ahmad Nawab',
+                    jointClientName: 'Mohd Zahid Bin Mohammad',
+                    singleClientNric: 'NRIC',
+                    jointClientNric: 'NRIC',
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                }
+            ],
+            '14/12/2023': [
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1702534873886,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'RQ400440',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'AUD',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'Nathan Goh',
+                    jointClientName: 'Mariah',
+                    singleClientNric: 'Passport',
+                    jointClientNric: 'NRIC',
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1702534873886,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'RP500120',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'MYR',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'Zaitun Samion',
+                    jointClientName: null,
+                    singleClientNric: 'NRIC',
+                    jointClientNric: null,
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1702534873886,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'PR600121',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'USD',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'Zairul',
+                    jointClientName: null,
+                    singleClientNric: 'Army',
+                    jointClientNric: null,
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1702535139432,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'EI2011113',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'MYR',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'Michelle Goh',
+                    jointClientName: null,
+                    singleClientNric: 'Passport',
+                    jointClientNric: null,
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                },
+                {
+                    name: 'HQ - Kuala Lumpur',
+                    lastUpdated: 1702535139432,
+                    transactionRef: 'S1207A008',
+                    accountType: 'INDIVIDUAL',
+                    accountNo: 'EP201114',
+                    fundName: 'KENANGA DANA SAFA',
+                    currency: 'EUR',
+                    investmentAmount: 656566,
+                    salesCharge: 0,
+                    agentName: 'Agent F',
+                    agentCode: '1005,P1005',
+                    bdmName: 'Bdm Dummy',
+                    paymentMethod: 'Client Trust Account (CTA)',
+                    referenceNumber: '23AA530401701842475663',
+                    status: 'In review',
+                    singleClientName: 'Natasha Khairul',
+                    jointClientName: null,
+                    singleClientNric: 'NRIC',
+                    jointClientNric: null,
+                    userId: 'qb.aa',
+                    omniRef: '23AA5304S1207A008',
+                    processType: 'NTB'
+                }
+            ]
+        }
+
+
+        function groupDataByCurrency() {
+            const data = { ...reportData }
+            const groupedData = {}
+            if (Object.keys.length > 0) {
+                for (const [lastUpdated, transactionDataByCurrency] of Object.entries(data)) {
+                    const dateString = lastUpdated
+                    if (!groupedData[dateString]) {
+                        groupedData[dateString] = {
+                            usdMarket: [],
+                            myrMarket: [],
+                            eurMarket: [],
+                            gbpMarket: [],
+                            audMarket: [],
+                            sgdMarket: [],
+                            rmbMarket: [],
+                            jpyMarket: [],
+                        }
+                    }
+                    transactionDataByCurrency.forEach((sale) => {
+                        this.classifySalesByCurrency(sale, groupedData, dateString)
+                    })
+                }
+            }
+            return groupedData
+        }
+
+        function classifySalesByCurrency(
+            sale,
+            groupedData,
+            dateString
+        ) {
+            const salesByCurency = {
+                myrMarket: 'myrMarket',
+                usdMarket: 'usdMarket',
+                eurMarket: 'eurMarket',
+                gbpMarket: 'gbpMarket',
+                audMarket: 'audMarket',
+                sgdMarket: 'sgdMarket',
+                rmbMarket: 'rmbMarket',
+                jpyMarket: 'jpyMarket',
+            }
+            const currency = sale.currency.toUpperCase()
+            let marketType
+            const { myrMarket, usdMarket, eurMarket, gbpMarket, audMarket, sgdMarket, rmbMarket, jpyMarket } = salesByCurency
+            switch (currency) {
+                case 'USD':
+                    marketType = usdMarket
+                    break
+                case 'MYR':
+                    marketType = myrMarket
+                    break
+                case 'EUR':
+                    marketType = eurMarket
+                    break
+                case 'GBP':
+                    marketType = gbpMarket
+                    break
+                case 'AUD':
+                    marketType = audMarket
+                    break
+                case 'SGD':
+                    marketType = sgdMarket
+                    break
+                case 'RMB':
+                    marketType = rmbMarket
+                    break
+                case 'JPY':
+                    marketType = jpyMarket
+                    break
+                default:
+                    break
+            }
+
+            if (marketType) {
+                groupedData[dateString][marketType].push({
+                    ...sale,
+                    dateString,
+                })
+            }
+            return groupedData
+        }
+        const data = groupDataByCurrency()
+        generateHtml(data);
+    </script>
+</body>
+
+</html>

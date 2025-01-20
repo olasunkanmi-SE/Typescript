@@ -64,15 +64,14 @@ class SolanoPlayGround {
         const senderWallet = this.getSenderPublicKey();
         const receiverWallet = this.getReceiverPublicKey();
         const senderSecretKey = this.getSecretKey("SENDER_SECRET_KEY");
-        const x = this.getPublicKeyFromSecretKey("SENDER_SECRET_KEY");
+        const senderPublicKey = this.getPublicKeyFromSecretKey("SENDER_SECRET_KEY");
         try {
-            // Check the balance before initiating the transaction
             const senderBalanceBefore = await this.getBalance(this.getSenderPublicKey());
             console.log(`Sender's balance before: ${senderBalanceBefore} SOL`);
             const lamportsToSend = 5000;
             console.log("Initiating transaction");
             const transaction = new web3_js_1.Transaction().add(web3_js_1.SystemProgram.transfer({
-                fromPubkey: x,
+                fromPubkey: senderPublicKey,
                 toPubkey: new web3_js_1.PublicKey(receiverWallet),
                 lamports: lamportsToSend,
             }));
@@ -102,7 +101,8 @@ class Test extends SolanoPlayGround {
     }
     async drop() {
         const publicKey = this.getSenderPublicKey();
-        return await this.airDrop(publicKey);
+        const airDrop = await this.airDrop(publicKey);
+        return airDrop;
     }
 }
 const test = new Test();

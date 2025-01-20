@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table, th, td {
+  border: 1px solid rgb(241, 241, 241);
+  border-collapse: collapse;
+}
+th, td {
+  padding: 8px 15px 8px 15px;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+
+<script>
+// Your data
+const data = [
+[
+  {
+    "date": "1/30/2024",
+    "data": {
+      "moneyMarket": {},
+      "nonMoneyMarket": {
+        "MYR": {
+          "Batu Pahat - PW Office": [
+            {
+              "EPF": {
+                "3RD PARTY": {
+                  "investmentAmount": 5767
+                }
+              }
+            }
+          ],
+          "HQ - Kuala Lumpur": [
+            {
+              "PRS": {
+                "KIB": {
+                  "investmentAmount": 4566
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "date": "1/29/2024",
+    "data": {
+      "moneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 132000
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 5433
+                }
+              }
+            }
+          ]
+        }
+      },
+      "nonMoneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "PRS": {
+                "3RD PARTY": {
+                  "investmentAmount": 5677
+                }
+              }
+            },
+            {
+              "PRS": {
+                "KIB": {
+                  "investmentAmount": 3455
+                }
+              }
+            },
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 4333
+                }
+              }
+            },
+            {
+              "EPF": {
+                "KIB": {
+                  "investmentAmount": 87777
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 99999
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 88888
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 6777
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "date": "1/23/2024",
+    "data": {
+      "moneyMarket": {},
+      "nonMoneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "EPF": {
+                "KIB": {
+                  "investmentAmount": 1000
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 1000
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "date": "1/16/2024",
+    "data": {
+      "moneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 55555
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 55555
+                }
+              }
+            }
+          ]
+        }
+      },
+      "nonMoneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 26888
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 588888
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 5666
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 566666
+                }
+              }
+            },
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 2222
+                }
+              }
+            },
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 5566
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 555555
+                }
+              }
+            },
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 2222
+                }
+              }
+            },
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 5566
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 555555
+                }
+              }
+            },
+            {
+              "PRS": {
+                "KIB": {
+                  "investmentAmount": 100000000
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "date": "1/12/2024",
+    "data": {
+      "moneyMarket": {},
+      "nonMoneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 6666
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 6777
+                }
+              }
+            },
+            {
+              "PRS": {
+                "KIB": {
+                  "investmentAmount": 1000
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "date": "1/11/2024",
+    "data": {
+      "moneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 21000
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 56000
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 50000
+                }
+              }
+            }
+          ]
+        }
+      },
+      "nonMoneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 666
+                }
+              }
+            },
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 5555
+                }
+              }
+            },
+            {
+              "PRS": {
+                "3RD PARTY": {
+                  "investmentAmount": 555
+                }
+              }
+            },
+            {
+              "PRS": {
+                "3RD PARTY": {
+                  "investmentAmount": 777
+                }
+              }
+            },
+            {
+              "PRS": {
+                "KIB": {
+                  "investmentAmount": 5555
+                }
+              }
+            },
+            {
+              "PRS": {
+                "KIB": {
+                  "investmentAmount": 5555
+                }
+              }
+            },
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 3222
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 566000
+                }
+              }
+            },
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 6666
+                }
+              }
+            },
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 5555
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 3333
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 3444
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 6788
+                }
+              }
+            }
+          ]
+        },
+        "USD": {
+          "HQ - Kuala Lumpur": [
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 6555
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 6788
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "date": "1/24/2024",
+    "data": {
+      "moneyMarket": {},
+      "nonMoneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "PRS": {
+                "KIB": {
+                  "investmentAmount": 1000
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "date": "1/19/2024",
+    "data": {
+      "moneyMarket": {},
+      "nonMoneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "PRS": {
+                "KIB": {
+                  "investmentAmount": 1000
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "date": "1/18/2024",
+    "data": {
+      "moneyMarket": {},
+      "nonMoneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "PRS": {
+                "KIB": {
+                  "investmentAmount": 1000
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "date": "1/17/2024",
+    "data": {
+      "moneyMarket": {},
+      "nonMoneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "PRS": {
+                "KIB": {
+                  "investmentAmount": 1000
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+]
+];
+
+// Function to generate table based on the provided data
+function generateTable(data) {
+  let html = `<h2>Date: ${data.date}</h2>`;
+  html += "<p>MYR</p>";
+  html += `<table>
+            <tr>
+              <th style="background-color: #000; color: #fff;">No.</th>
+              <th style="background-color: #000; color: #fff;">Processing Branch</th>
+              <th style="background-color: #000; color: #fff;" colspan="2">EPF</th>
+              <th style="background-color: #000; color: #fff;" colspan="2">CASH</th>
+              <th style="background-color: #000; color: #fff;" colspan="2">PRS</th>
+            </tr>
+            <tr>
+              <th></th>
+              <th></th>
+              <th>KIB</th>
+              <th>3rd Party</th>
+              <th>KIB</th>
+              <th>3rd Party</th>
+              <th>KIB</th>
+              <th>3rd Party</th>
+            </tr>
+            <tr>
+              <th></th>
+              <th></th>
+              <th>No. of cases</th>
+              <th>Amount</th>
+              <th>No. of cases</th>
+              <th>Amount</th>
+              <th>No. of cases</th>
+              <th>Amount</th>
+            </tr>`;
+  
+  for (let i = 0; i < data.data.nonMoneyMarket.MYR["HQ - Kuala Lumpur"].length; i++) {
+    const investment = data.data.nonMoneyMarket.MYR["HQ - Kuala Lumpur"][i];
+    const investmentAmount = investment.CASH ? investment.CASH.investmentAmount : (investment.EPF ? investment.EPF.investmentAmount : (investment.PRS ? investment.PRS.investmentAmount : 0));
+    const cases = investment.CASH ? "1" : (investment.EPF ? "1" : (investment.PRS ? "1" : "0"));
+    const branchName = "HQ - Kuala Lumpur";
+    
+    html += `<tr>
+                <td>${i + 1}</td>
+                <td>${branchName}</td>
+                <td>${investment.EPF && investment.EPF.KIB ? cases : ""}</td>
+                <td>${investment.EPF && investment.EPF.KIB ? investmentAmount : ""}</td>
+                <td>${investment.CASH && investment.CASH.KIB ? cases : ""}</td>
+                <td>${investment.CASH && investment.CASH.KIB ? investmentAmount : ""}</td>
+                <td>${investment.PRS && investment.PRS.KIB ? cases : ""}</td>
+                <td>${investment.PRS && investment.PRS.KIB ? investmentAmount : ""}</td>
+             </tr>`;
+  }
+  
+  html += `</table>`;
+  return html;
+}
+
+// Function to render tables for each data entry
+function renderTables(data) {
+  const container = document.getElementById("container");
+  let tablesHTML = "";
+  data.forEach(entry => {
+    tablesHTML += generateTable(entry);
+  });
+  container.innerHTML = tablesHTML;
+}
+
+// Call the function to render tables
+renderTables([
+  {
+    "date": "1/30/2024",
+    "data": {
+      "moneyMarket": {},
+      "nonMoneyMarket": {
+        "MYR": {
+          "Batu Pahat - PW Office": [
+            {
+              "EPF": {
+                "3RD PARTY": {
+                  "investmentAmount": 5767
+                }
+              }
+            }
+          ],
+          "HQ - Kuala Lumpur": [
+            {
+              "PRS": {
+                "KIB": {
+                  "investmentAmount": 4566
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "date": "1/29/2024",
+    "data": {
+      "moneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 132000
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 5433
+                }
+              }
+            }
+          ]
+        }
+      },
+      "nonMoneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "PRS": {
+                "3RD PARTY": {
+                  "investmentAmount": 5677
+                }
+              }
+            },
+            {
+              "PRS": {
+                "KIB": {
+                  "investmentAmount": 3455
+                }
+              }
+            },
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 4333
+                }
+              }
+            },
+            {
+              "EPF": {
+                "KIB": {
+                  "investmentAmount": 87777
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 99999
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 88888
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 6777
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "date": "1/23/2024",
+    "data": {
+      "moneyMarket": {},
+      "nonMoneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "EPF": {
+                "KIB": {
+                  "investmentAmount": 1000
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 1000
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "date": "1/16/2024",
+    "data": {
+      "moneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 55555
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 55555
+                }
+              }
+            }
+          ]
+        }
+      },
+      "nonMoneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 26888
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 588888
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 5666
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 566666
+                }
+              }
+            },
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 2222
+                }
+              }
+            },
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 5566
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 555555
+                }
+              }
+            },
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 2222
+                }
+              }
+            },
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 5566
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 555555
+                }
+              }
+            },
+            {
+              "PRS": {
+                "KIB": {
+                  "investmentAmount": 100000000
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "date": "1/12/2024",
+    "data": {
+      "moneyMarket": {},
+      "nonMoneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 6666
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 6777
+                }
+              }
+            },
+            {
+              "PRS": {
+                "KIB": {
+                  "investmentAmount": 1000
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "date": "1/11/2024",
+    "data": {
+      "moneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 21000
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 56000
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 50000
+                }
+              }
+            }
+          ]
+        }
+      },
+      "nonMoneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 666
+                }
+              }
+            },
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 5555
+                }
+              }
+            },
+            {
+              "PRS": {
+                "3RD PARTY": {
+                  "investmentAmount": 555
+                }
+              }
+            },
+            {
+              "PRS": {
+                "3RD PARTY": {
+                  "investmentAmount": 777
+                }
+              }
+            },
+            {
+              "PRS": {
+                "KIB": {
+                  "investmentAmount": 5555
+                }
+              }
+            },
+            {
+              "PRS": {
+                "KIB": {
+                  "investmentAmount": 5555
+                }
+              }
+            },
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 3222
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 566000
+                }
+              }
+            },
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 6666
+                }
+              }
+            },
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 5555
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 3333
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 3444
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 6788
+                }
+              }
+            }
+          ]
+        },
+        "USD": {
+          "HQ - Kuala Lumpur": [
+            {
+              "CASH": {
+                "3RD PARTY": {
+                  "investmentAmount": 6555
+                }
+              }
+            },
+            {
+              "CASH": {
+                "KIB": {
+                  "investmentAmount": 6788
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "date": "1/24/2024",
+    "data": {
+      "moneyMarket": {},
+      "nonMoneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "PRS": {
+                "KIB": {
+                  "investmentAmount": 1000
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "date": "1/19/2024",
+    "data": {
+      "moneyMarket": {},
+      "nonMoneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "PRS": {
+                "KIB": {
+                  "investmentAmount": 1000
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "date": "1/18/2024",
+    "data": {
+      "moneyMarket": {},
+      "nonMoneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "PRS": {
+                "KIB": {
+                  "investmentAmount": 1000
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "date": "1/17/2024",
+    "data": {
+      "moneyMarket": {},
+      "nonMoneyMarket": {
+        "MYR": {
+          "HQ - Kuala Lumpur": [
+            {
+              "PRS": {
+                "KIB": {
+                  "investmentAmount": 1000
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+]);
+</script>
+
+<div id="container"></div>
+
+</body>
+</html>

@@ -1,0 +1,906 @@
+<head>
+    <style>
+        @media print {
+            .page-break {
+                clear: both;
+                page-break-after: always;
+            }
+        }
+
+        @page {
+            margin-top: 70px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            page-break-inside: always;
+        }
+
+        th,
+        td {
+            border: 1px solid rgb(241, 241, 241);
+            border-collapse: collapse;
+        }
+
+        th {
+            padding: 8px 15px 8px 15px;
+        }
+
+        td {
+            padding: 0;
+            text-align: center;
+        }
+
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
+        thead {
+            color: #fff;
+            background-color: black;
+        }
+
+        hr {
+            width: 100%;
+            margin-top: 5px;
+            margin-bottom: 5px;
+            border: none;
+            height: 1px;
+            background-color: #000;
+        }
+
+        .part {
+            display: block;
+        }
+
+        .headertables {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        .report-title {
+            font-style: normal;
+            font-weight: 700;
+            font-size: 20px;
+            line-height: 135%;
+            color: #171717;
+        }
+
+        .even-row {
+            background-color: rgb(211, 211, 211);
+        }
+
+        .currency-list {
+            display: flex;
+            align-items: center;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+
+        .currency-list ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+        }
+
+        .currency-list ul li {
+            margin-right: 10px;
+        }
+
+        .currency-list hr {
+            border: none;
+            border-top: 1px solid #666666;
+            flex-grow: 1;
+            margin-left: 10px;
+        }
+
+        body {
+            font-family: 'Nunito Sans', sans-serif;
+            font-size: 11px;
+            margin: 0 48px;
+        }
+
+        .table-row>td:first-child {
+            border-left: 0.5px solid #333333;
+        }
+
+        .table-row>td:last-child {
+            border-right: 0.5px solid #333333;
+        }
+
+        .table-row>td {
+            border-top: 0.5px solid #333333;
+        }
+
+        .even-row {
+            background-color: rgb(211, 211, 211);
+        }
+
+        .container {
+            width: 100%;
+        }
+
+        .date-currency {
+            font-size: 13px;
+        }
+
+        .value {
+            padding: 8px;
+            border-bottom: 1px solid #bcbcbc;
+            text-align: center;
+        }
+
+        .value:first-child {
+            padding-top: 0;
+        }
+
+        .value:last-child {
+            border-bottom: none;
+        }
+
+        .name {
+            font-weight: bold;
+        }
+
+        .remarks {
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div id="section"></div>
+        <div id="container"></div>
+        <script>
+            let username;
+            let html = ``;
+            let sectionContainer = ``;
+
+            function generateTableHeader() {
+                html += `
+              <thead>
+                  <tr>
+                      <th>No.</th>
+                      <th>User Id</th>
+                      <th>Processing Branch</th>
+                      <th>Date</th>
+                      <th>OMNI Ref No</th>
+                      <th>NTB/ETB</th>
+                      <th>Account Type</th>
+                      <th>Investor A/C No</th>
+                      <th>Investor Name & NRIC</th>
+                      <th>Payment Mode</th>
+                      <th>Payment Ref No</th>
+                      <th>Fund Name</th>
+                      <th>Currency</th>
+                      <th>Amount</th>
+                      <th>Sales Charge %</th>
+                      <th>Advisor Name & Code</th>
+                      <th>BDM</th>
+                      <th>Status</th>
+                      <th>Reroute/Rejection Reason</th>
+                  </tr>
+              </thead>
+          `;
+            }
+            function splitPaymentMode(data, paymentRefNo) {
+                let paymentMode = [];
+                if (data.includes('TT')) {
+                    paymentMode.push(paymentRefNo);
+                }
+                if (data.includes('Cheque')) {
+                    paymentMode.push(paymentRefNo);
+                }
+                return paymentMode;
+            }
+
+            function splitAndBreak(data) {
+                let display
+                if (data.includes(',')) {
+                    display = data.split(", ");
+                } else {
+                    display = [data]
+                }
+                return display
+            }
+
+            function retrieveStatusRemarks(data) {
+                let reportRemarks = ''
+                if (data?.length) {
+                    dataToArray = JSON.parse(data)
+                    let contentArrays = dataToArray.map(obj => obj.content);
+                    let remarks = contentArrays.reduce((acc, arr) => acc.concat(arr), []);
+                    remarks = remarks.join(', ');
+                    let maxLength = 50;
+                    let chunks = [];
+                    for (let i = 0; i < remarks.length; i += maxLength) {
+                        chunks.push(remarks.substring(i, i + maxLength));
+                    }
+                    if (chunks.length) {
+                        reportRemarks = chunks.join("\n")
+                    }
+                }
+                return reportRemarks;
+            }
+
+            function formatNRIC(nric) {
+                let formatedNRIC = ''
+                if (nric) {
+                    formatedNRIC = `(${nric.slice(0, 6)}-${nric.slice(6, 8)}-${nric.slice(8)})`
+                }
+                return formatedNRIC
+            }
+
+            function generateHtml(data) {
+                const branches = new Set();
+                const statuses = new Set();
+                setTimeout(() => {
+                    if (branches) {
+                        html += generateReportHeader(data)
+                    }
+                }, 0)
+
+                const container = document.getElementById("container");
+                for (const [dateString, transactionData] of Object.entries(data)) {
+                    if (dateString) {
+                        html += `<div class="date-currency"><p>${dateString}</p></div>`;
+                        for (const [currency, currencySummary] of Object.entries(
+                            transactionData
+                        )) {
+                            const transactionCurrency = currency.substring(0, 3).toUpperCase()
+                            if (currencySummary?.length > 0) {
+                                html += `<div class="page-break">`
+                                html += `<div  class="currency-list date-currency"><ul><li>${transactionCurrency}</li></ul><hr></div>`;
+                                html += `<table>`
+                                let headerGenerated = false;
+                                if (!headerGenerated) {
+                                    generateTableHeader();
+                                    headerGenerated = true;
+                                }
+                                currencySummary.forEach((summary, index) => {
+                                    if (summary.username) {
+                                        username = summary.username
+                                    }
+                                    const evenOddClass = index % 2 === 0 ? 'odd-row' : 'even-row';
+                                    const {
+                                        userId,
+                                        name,
+                                        lastUpdated,
+                                        omniRef,
+                                        processType,
+                                        accountType,
+                                        accountNo,
+                                        paymentMethod,
+                                        referenceNumber,
+                                        fundName,
+                                        investmentAmount,
+                                        salesCharge,
+                                        bdmName,
+                                        status,
+                                        jointClientName,
+                                        jointClientId,
+                                        singleClientName,
+                                        singleClientId,
+                                        agentName,
+                                        agentCode,
+                                        statusRemarks,
+                                    } = summary;
+                                    const paymentModeString = paymentMethod.includes('TT') ? `TT, ${paymentMethod}` : ` , ${paymentMethod}`
+                                    const clients = jointClientName && jointClientId
+                                        ? [singleClientName, singleClientId, jointClientName, jointClientId]
+                                        : [singleClientName, singleClientId]
+                                    const transactionSalesCharge = splitAndBreak(`${salesCharge}, ${salesCharge}`)
+                                    const agentInfo = splitAndBreak(`${agentName}, ${agentCode}`)
+                                    const bdmInfo = splitAndBreak(`${bdmName}, ${bdmName}`)
+                                    const statusInfo = splitAndBreak(`${status}, ${status}`)
+                                    const remarks = retrieveStatusRemarks(statusRemarks)
+                                    const paymentRefInfo = splitPaymentMode(paymentMethod, referenceNumber)
+                                    branches.add(name)
+                                    statuses.add(status)
+                                    let dateInDayMonthYear
+                                    if (lastUpdated) {
+                                        const date = new Date(lastUpdated)
+                                        dateInDayMonthYear = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
+                                    }
+
+                                    html += `
+                                  <tr class=${evenOddClass}>
+                                  <td>${index + 1}</td>
+                                  <td>${userId || ""}</td>
+                                  <td>${name}</td>
+                                  <td>${dateInDayMonthYear}</td>
+                                  <td>${omniRef || ""}</td>
+                                  <td>${processType || ""}</td>
+                                  <td>${accountType || ""}</td>
+                                  <td>${accountNo || ""}</td>
+                                  <td><div class="value name" style="border-bottom: none;">${clients[0] || ""}</div>
+                                      <div class="value" style="border-bottom: none">${formatNRIC(clients[1]) || ""}</div>
+                                      <div class="value" style="border-bottom: none">${clients[2] || ""}</div>
+                                      <div class="value">${formatNRIC(clients[3]) || ""}</div>
+                                  </td>
+                                  <td><div class="value">TT</div>
+                                  <div class="value">Cheque</div></td>
+                                  <td><div class="value" >${paymentRefInfo[0] || ""}</div>
+                                      <div class="value">${paymentRefInfo[1] || ""}</div></td>
+                                  <td>${fundName}</td>
+                                  <td>${transactionCurrency}</td>
+                                  <td>${investmentAmount}</td>
+                                  <td><div class="value" >${transactionSalesCharge[0] || ""}</div>
+                                      <div class="value">${transactionSalesCharge[1] || ""}</div></td></td>
+                                  <td><div class="value name" >${agentInfo[0] || ""}</div>
+                                      <div class="value">${agentInfo[1] || ""}</div></td>
+                                  <td><div class="value name" >${bdmInfo[0] || ""}</div>
+                                      <div class="value name">${bdmInfo[1] || ""}</div></td>
+                                  <td id="originalContent5"><div class="value" >${statusInfo[0] || ""}</div>
+                                      <div class="value">${statusInfo[1] || ""}</div></td>
+                                  <td><div class="remarks">${remarks}</div></td >
+                                      <tr />
+                                      `;
+                                });
+                            }
+                            html += `</table ></div>`
+                        }
+                    }
+
+                }
+                container.innerHTML += html;
+            }
+
+            const reportMetaData = (data) => {
+                let dateRange
+                let branches
+                let statuses
+                for (const [dateString, statisticsData] of Object.entries(data)) {
+                    statisticsData.forEach((data) => {
+                        if (data?.dateRange?.length) dateRange = data.dateRange
+                        if (data?.branches?.length) branches = data.branches
+                        if (data?.statuses?.length) statuses = data.statuses
+                    })
+                    if (dateRange && branches && statuses) {
+                        break;
+                    }
+                }
+                const range = parseDateRange(dateRange)
+                return [range, branches, statuses]
+            }
+
+            parseDateRange = (dateString) => {
+                const dateParts = dateString.split('~')
+                const ddmmyy = dateParts.map((part) => {
+                    const date = new Date(Number(part))
+                    return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
+                })
+                return {
+                    start: ddmmyy[0],
+                    end: ddmmyy[1],
+                }
+            }
+            function generateReportHeader(data) {
+                const metaData = reportMetaData(reportData)
+                const generalInfoSection = document.getElementById("section");
+                sectionContainer += `<p class="report-title" > Sales Submission Statistic Details Report</p >
+                                      <div class="headertables">
+                                          <table>
+                                              <tr>
+                                                  <th style=" font-size: 14px; background-color: #f8f8f8; font-weight: 600; text-align:left; width:150px;">Date Range</th>
+                                                  <td style="text-align:left; font-size:13px; padding-left: 10px;"><p>${metaData[0].start} - ${metaData[0].end}</p></td>
+                                              </tr>
+                                              <tr>
+                                                  <th style="font-size: 14px; background-color: #f8f8f8; font-weight: 600; text-align:left; width:150px">Processing Branch</th>
+                                                  <td style="text-align:left; font-size:13px; padding-left: 10px;">${metaData[1].join('  ,')}</td>
+                                              </tr>
+                                          </table>
+                                          <table style="margin-left: 10px">
+                                              <tr>
+                                                  <th style=" font-size: 14px; background-color: #f8f8f8; font-weight: 600; text-align:left; width:150px">User Id</th>
+                                                  <td style="text-align:left; font-size:13px; padding-left: 10px;"><p>${username}</p></td>
+                                              </tr>
+                                              <tr>
+                                                  <th style=" font-size: 14px; background-color: #f8f8f8; font-weight: 600; text-align:left; width:150px;">Status</th>
+                                                  <td style="text-align:left; font-size:13px; padding-left: 10px;">${metaData[2].join('  ,')}</td>
+                                              </tr>
+                                          </table>
+                                      </div>`;
+                generalInfoSection.innerHTML += sectionContainer;
+            }
+
+            const reportData = {
+                '14/3/2023': [
+                    {
+                        name: 'HQ - Kuala Lumpur',
+                        lastUpdated: 1678771124723,
+                        transactionRef: 'S0314A045',
+                        accountType: 'INDIVIDUAL',
+                        accountNo: 'TOMS00397',
+                        fundName: 'KENANGA ONEPRS GROWTH FUND',
+                        fundType: 'PRS',
+                        currency: 'MYR',
+                        investmentAmount: 1200,
+                        salesCharge: 1.5,
+                        agentName: 'Agent F',
+                        agentCode: 'P1005',
+                        bdmName: 'Bdm Dummy',
+                        paymentMethod: 'Recurring',
+                        referenceNumber: null,
+                        status: 'Rejected',
+                        singleClientName: 'Abodenn',
+                        jointClientName: null,
+                        singleClientId: '970423061234',
+                        jointClientId: null,
+                        userId: 'qb.aa',
+                        statusRemarks: `[{"title": "Payment", "content": ["Invalid payment slip", "3rd party payment", "CDM payment slip is not allowed", "The payment currency differs from fund's currency"]}, {"title": "Document", "content": ["Invalid supporting document", "Passport expired"]}, {"title": "Invalid information", "content": ["Principal holder's name differs from NRIC", "Principal holder's name differs from passport", "Joint holder's name differs from NRIC", "Joint holder's name differs from passport"]}, {"title": "Others", "content": ["LANDASN KITA SUDAH TERBABAS"]}]`,
+                        omniRef: '23AA1454ZS0314A045',
+                        processType: 'ETB',
+                        dateRange: '1678032000000~1678982399999',
+                        username: 'bh.aa',
+                        statuses: [Array],
+                        branches: [Array]
+                    },
+                    {
+                        name: 'HQ - Kuala Lumpur',
+                        lastUpdated: 1678771151434,
+                        transactionRef: 'S0314A046',
+                        accountType: 'INDIVIDUAL',
+                        accountNo: 'TOMS00396',
+                        fundName: 'KENANGA BALANCED FUND',
+                        fundType: 'UTF',
+                        currency: 'MYR',
+                        investmentAmount: 2000,
+                        salesCharge: 2,
+                        agentName: 'Agent F',
+                        agentCode: '1005',
+                        bdmName: 'Bdm Dummy',
+                        paymentMethod: 'Recurring',
+                        referenceNumber: null,
+                        status: 'Rejected',
+                        singleClientName: 'Abodenn',
+                        jointClientName: null,
+                        singleClientId: '970423061234',
+                        jointClientId: null,
+                        userId: 'qb.aa',
+                        statusRemarks: `[{"title": "Payment", "content": ["Invalid payment slip", "3rd party payment", "CDM payment slip is not allowed", "The payment currency differs from fund's currency"]}, {"title": "Document", "content": ["Invalid supporting document", "Passport expired"]}, {"title": "Invalid information", "content": ["Principal holder's name differs from NRIC", "Principal holder's name differs from passport", "Joint holder's name differs from NRIC", "Joint holder's name differs from passport", "Principal holder's NRIC number differs from NRIC", "Principal holder's passport number differs from passport", "Joint holder's NRIC number differs from NRIC", "Joint holder's passport number differs from passport"]}]`,
+                        omniRef: '23AA1453ZS0314A046',
+                        processType: 'ETB'
+                    },
+                    {
+                        name: 'HQ - Kuala Lumpur',
+                        lastUpdated: 1678771096260,
+                        transactionRef: 'S0314A047',
+                        accountType: 'INDIVIDUAL',
+                        accountNo: 'TOMS00395',
+                        fundName: 'AMP 2',
+                        fundType: 'AMP',
+                        currency: 'MYR',
+                        investmentAmount: 6000,
+                        salesCharge: 2,
+                        agentName: 'Agent F',
+                        agentCode: '1005',
+                        bdmName: 'Bdm Dummy',
+                        paymentMethod: 'Recurring',
+                        referenceNumber: null,
+                        status: 'Rejected',
+                        singleClientName: 'Abodenn',
+                        jointClientName: null,
+                        singleClientId: '970423061234',
+                        jointClientId: null,
+                        userId: 'qb.aa',
+                        statusRemarks: '[{"title": "Others", "content": ["SESUNGUHNNYA"]}]',
+                        omniRef: '23AA1452ZS0314A047',
+                        processType: 'ETB'
+                    },
+                    {
+                        name: 'HQ - Kuala Lumpur',
+                        lastUpdated: 1678762415366,
+                        transactionRef: 'S0314A031',
+                        accountType: 'INDIVIDUAL',
+                        accountNo: 'TOMS00389',
+                        fundName: 'KENANGA ONEPRS GROWTH FUND',
+                        fundType: 'PRS',
+                        currency: 'MYR',
+                        investmentAmount: 2000,
+                        salesCharge: 1.5,
+                        agentName: 'Agent F',
+                        agentCode: 'P1005',
+                        bdmName: 'Bdm Dummy',
+                        paymentMethod: 'Recurring',
+                        referenceNumber: null,
+                        status: 'Rejected',
+                        singleClientName: 'Abodenn',
+                        jointClientName: null,
+                        singleClientId: '970423061234',
+                        jointClientId: null,
+                        userId: 'qh.aa',
+                        statusRemarks: `[{"title": "Invalid information", "content": ["Principal holder's name differs from NRIC", "Principal holder's name differs from passport", "Joint holder's name differs from NRIC"]}, {"title": "Others", "content": ["iuashohoia"]}]`,
+                        omniRef: '23AA1441ZS0314A031',
+                        processType: 'ETB'
+                    },
+                    {
+                        name: 'HQ - Kuala Lumpur',
+                        lastUpdated: 1678761643233,
+                        transactionRef: 'S0314A029',
+                        accountType: 'INDIVIDUAL',
+                        accountNo: 'TOMS00388',
+                        fundName: 'AMP 2',
+                        fundType: 'AMP',
+                        currency: 'MYR',
+                        investmentAmount: 6000,
+                        salesCharge: 1.5,
+                        agentName: 'Agent F',
+                        agentCode: '1005',
+                        bdmName: 'Bdm Dummy',
+                        paymentMethod: 'Recurring',
+                        referenceNumber: null,
+                        status: 'Rejected',
+                        singleClientName: 'Abodenn',
+                        jointClientName: null,
+                        singleClientId: '970423061234',
+                        jointClientId: null,
+                        userId: 'qh.aa',
+                        statusRemarks: `[{"title": "Document", "content": ["Invalid supporting document", "Passport expired"]}, {"title": "Invalid information", "content": ["Principal holder's name differs from NRIC", "Principal holder's name differs from passport", "Joint holder's name differs from NRIC"]}]`,
+                        omniRef: '23AA1438ZS0314A029',
+                        processType: 'ETB'
+                    },
+                    {
+                        name: 'HQ - Kuala Lumpur',
+                        lastUpdated: 1678758394709,
+                        transactionRef: 'S0314A027',
+                        accountType: 'INDIVIDUAL',
+                        accountNo: null,
+                        fundName: 'KENANGA ONEPRS GROWTH FUND',
+                        fundType: 'PRS',
+                        currency: 'MYR',
+                        investmentAmount: 3000,
+                        salesCharge: 1.5,
+                        agentName: 'Agent F',
+                        agentCode: 'P1005',
+                        bdmName: 'Bdm Dummy',
+                        paymentMethod: 'Online Banking / TT / ATM',
+                        referenceNumber: '7672728',
+                        status: 'Rejected',
+                        singleClientName: 'Anything',
+                        jointClientName: null,
+                        singleClientId: '970321072323',
+                        jointClientId: null,
+                        userId: 'qh.aa',
+                        statusRemarks: `[{"title": "Invalid information", "content": ["Principal holder's name differs from NRIC", "Joint holder's name differs from passport"]}, {"title": "Others", "content": ["ENGKAU NI KAN XHABIS2 MENYUSAHKAN AKU LAHHHH"]}]`,
+                        omniRef: '23AA1436S0314A027',
+                        processType: 'ETB'
+                    },
+                    {
+                        name: 'HQ - Kuala Lumpur',
+                        lastUpdated: 1678758394709,
+                        transactionRef: 'S0314A027',
+                        accountType: 'INDIVIDUAL',
+                        accountNo: null,
+                        fundName: 'KENANGA ONEPRS GROWTH FUND',
+                        fundType: 'PRS',
+                        currency: 'MYR',
+                        investmentAmount: 3000,
+                        salesCharge: 1.5,
+                        agentName: 'Agent F',
+                        agentCode: 'P1005',
+                        bdmName: 'Bdm Dummy',
+                        paymentMethod: 'Cheque',
+                        referenceNumber: null,
+                        status: 'Rejected',
+                        singleClientName: 'Anything',
+                        jointClientName: null,
+                        singleClientId: '970321072323',
+                        jointClientId: null,
+                        userId: 'qh.aa',
+                        statusRemarks: `[{"title": "Invalid information", "content": ["Principal holder's name differs from NRIC", "Joint holder's name differs from passport"]}, {"title": "Others", "content": ["ENGKAU NI KAN XHABIS2 MENYUSAHKAN AKU LAHHHH"]}]`,
+                        omniRef: '23AA1436S0314A027',
+                        processType: 'ETB'
+                    },
+                    {
+                        name: 'HQ - Kuala Lumpur',
+                        lastUpdated: 1678758394709,
+                        transactionRef: 'S0314A027',
+                        accountType: 'INDIVIDUAL',
+                        accountNo: null,
+                        fundName: 'AMPRS - GROWTH FUND',
+                        fundType: 'PRS',
+                        currency: 'MYR',
+                        investmentAmount: 1000,
+                        salesCharge: 2,
+                        agentName: 'Agent F',
+                        agentCode: 'P1005',
+                        bdmName: 'Bdm Dummy',
+                        paymentMethod: 'Online Banking / TT / ATM',
+                        referenceNumber: '7672728',
+                        status: 'Rejected',
+                        singleClientName: 'Anything',
+                        jointClientName: null,
+                        singleClientId: '970321072323',
+                        jointClientId: null,
+                        userId: 'qh.aa',
+                        statusRemarks: `[{"title": "Invalid information", "content": ["Principal holder's name differs from NRIC", "Joint holder's name differs from passport"]}, {"title": "Others", "content": ["ENGKAU NI KAN XHABIS2 MENYUSAHKAN AKU LAHHHH"]}]`,
+                        omniRef: '23AA1436S0314A027',
+                        processType: 'ETB'
+                    },
+                    {
+                        name: 'HQ - Kuala Lumpur',
+                        lastUpdated: 1678758394709,
+                        transactionRef: 'S0314A027',
+                        accountType: 'INDIVIDUAL',
+                        accountNo: null,
+                        fundName: 'AMPRS - GROWTH FUND',
+                        fundType: 'PRS',
+                        currency: 'MYR',
+                        investmentAmount: 1000,
+                        salesCharge: 2,
+                        agentName: 'Agent F',
+                        agentCode: 'P1005',
+                        bdmName: 'Bdm Dummy',
+                        paymentMethod: 'Cheque',
+                        referenceNumber: null,
+                        status: 'Rejected',
+                        singleClientName: 'Anything',
+                        jointClientName: null,
+                        singleClientId: '970321072323',
+                        jointClientId: null,
+                        userId: 'qh.aa',
+                        statusRemarks: `[{"title": "Invalid information", "content": ["Principal holder's name differs from NRIC", "Joint holder's name differs from passport"]}, {"title": "Others", "content": ["ENGKAU NI KAN XHABIS2 MENYUSAHKAN AKU LAHHHH"]}]`,
+                        omniRef: '23AA1436S0314A027',
+                        processType: 'ETB'
+                    }
+                ],
+                '8/3/2023': [
+                    {
+                        name: 'HQ - Kuala Lumpur',
+                        lastUpdated: 1678244416106,
+                        transactionRef: 'S0308A027',
+                        accountType: 'INDIVIDUAL',
+                        accountNo: null,
+                        fundName: 'KENANGA ONEPRS GROWTH FUND',
+                        fundType: 'PRS',
+                        currency: 'MYR',
+                        investmentAmount: 4500,
+                        salesCharge: 1.5,
+                        agentName: 'Agent F',
+                        agentCode: 'P1005',
+                        bdmName: 'Bdm Dummy',
+                        paymentMethod: 'Online Banking / TT / ATM',
+                        referenceNumber: 'I64666',
+                        status: 'Rejected',
+                        singleClientName: 'Change’',
+                        jointClientName: null,
+                        singleClientId: '890321094255',
+                        jointClientId: null,
+                        userId: 'qh.aa',
+                        statusRemarks: `[{"title": "Invalid information", "content": ["Principal holder's name differs from passport", "Joint holder's name differs from passport", "Principal holder's passport number differs from passport", "Joint holder's NRIC number differs from NRIC", "Joint holder's passport number differs from passport"]}]`,
+                        omniRef: '23AA1315S0308A027',
+                        processType: 'NTB'
+                    },
+                    {
+                        name: 'HQ - Kuala Lumpur',
+                        lastUpdated: 1678243879774,
+                        transactionRef: 'S0308A026',
+                        accountType: 'INDIVIDUAL',
+                        accountNo: null,
+                        fundName: 'KENANGA BALANCED FUND',
+                        fundType: 'UTF',
+                        currency: 'MYR',
+                        investmentAmount: 10000,
+                        salesCharge: 2,
+                        agentName: 'Agent F',
+                        agentCode: '1005',
+                        bdmName: 'Bdm Dummy',
+                        paymentMethod: 'Client Trust Account (CTA)',
+                        referenceNumber: '23AA131301678243767148',
+                        status: 'Rejected',
+                        singleClientName: 'Nokia',
+                        jointClientName: null,
+                        singleClientId: '920423081244',
+                        jointClientId: null,
+                        userId: 'qh.aa',
+                        statusRemarks: '[{"title": "Others", "content": ["zdggebdebaegeyey54ey4ybegbwt44urhrsy55ujt6746tsegysrtyseszdggebdebaegeyey54ey4ybegbwt44urhrsy55ujt6746tsegysrtyseszdggebdebaegeyey54ey4ybegbwt44urhrsy55ujt6746tsegysrtyseszdggebdebaegeyey54ey4ybegbwt44urhrsy55ujt6746tsegysrtyseszdggebdebaegeyey54ey4ybegbw"]}]',
+                        omniRef: '23AA1313S0308A026',
+                        processType: 'NTB'
+                    }
+                ],
+                '6/3/2023': [
+                    {
+                        name: 'HQ - Kuala Lumpur',
+                        lastUpdated: 1678072955504,
+                        transactionRef: 'S0304A013',
+                        accountType: 'JOINT',
+                        accountNo: null,
+                        fundName: 'Shariah AMP 2',
+                        fundType: 'AMP',
+                        currency: 'MYR',
+                        investmentAmount: 5400,
+                        salesCharge: 2,
+                        agentName: 'Agent F',
+                        agentCode: '1005',
+                        bdmName: 'Bdm Dummy',
+                        paymentMethod: 'Online Banking / TT / ATM',
+                        referenceNumber: '787676',
+                        status: 'Rejected',
+                        singleClientName: 'Mungnokgapo',
+                        jointClientName: 'Eudora',
+                        singleClientId: '940521094545',
+                        jointClientId: '950321085457',
+                        userId: 'qb.aa',
+                        statusRemarks: '[{"title": "Document", "content": ["Invalid supporting document", "Passport expired"]}]',
+                        omniRef: '23AA1184S0304A013',
+                        processType: 'NTB'
+                    },
+                    {
+                        name: 'HQ - Kuala Lumpur',
+                        lastUpdated: 1678066752999,
+                        transactionRef: 'S0306A003',
+                        accountType: 'JOINT',
+                        accountNo: 'TOMS00324',
+                        fundName: 'KENANGA BON ISLAM FUND',
+                        fundType: 'UTF',
+                        currency: 'MYR',
+                        investmentAmount: 1000,
+                        salesCharge: 1.5,
+                        agentName: 'Agent O',
+                        agentCode: '1012',
+                        bdmName: 'Bdm Dummy',
+                        paymentMethod: 'Recurring',
+                        referenceNumber: null,
+                        status: 'Rejected',
+                        singleClientName: 'Nora Danish',
+                        jointClientName: 'Emblem',
+                        singleClientId: '901209125627',
+                        jointClientId: '940623094567',
+                        userId: 'qh.aa',
+                        statusRemarks: `[{"title": "Invalid information", "content": ["Principal holder's name differs from NRIC", "Principal holder's name differs from passport", "Principal holder's passport number differs from passport"]}]`,
+                        omniRef: '23AA1167ZS0306A003',
+                        processType: 'NTB'
+                    },
+                    {
+                        name: 'HQ - Kuala Lumpur',
+                        lastUpdated: 1678068197049,
+                        transactionRef: 'S0306A004',
+                        accountType: 'INDIVIDUAL',
+                        accountNo: null,
+                        fundName: 'AMP 1',
+                        fundType: 'AMP',
+                        currency: 'MYR',
+                        investmentAmount: 5000,
+                        salesCharge: 2,
+                        agentName: 'Agent O',
+                        agentCode: '1012',
+                        bdmName: 'Bdm Dummy',
+                        paymentMethod: 'Online Banking / TT / ATM',
+                        referenceNumber: '787657656',
+                        status: 'Rejected',
+                        singleClientName: 'Alucard',
+                        jointClientName: null,
+                        singleClientId: '940921063434',
+                        jointClientId: null,
+                        userId: 'qh.aa',
+                        statusRemarks: `[{"title": "Payment", "content": ["Invalid payment slip", "3rd party payment", "CDM payment slip is not allowed", "The payment currency differs from fund's currency"]}]`,
+                        omniRef: '23AA1163S0306A004',
+                        processType: 'NTB'
+                    },
+                    {
+                        name: 'HQ - Kuala Lumpur',
+                        lastUpdated: 1678066912469,
+                        transactionRef: 'S0304A006',
+                        accountType: 'INDIVIDUAL',
+                        accountNo: null,
+                        fundName: 'AMPRS - CONSERVATIVE FUND',
+                        fundType: 'PRS',
+                        currency: 'MYR',
+                        investmentAmount: 500,
+                        salesCharge: 2,
+                        agentName: 'Agent O',
+                        agentCode: 'P1012',
+                        bdmName: 'Bdm Dummy',
+                        paymentMethod: 'Online Banking / TT / ATM',
+                        referenceNumber: '76567576',
+                        status: 'Rejected',
+                        singleClientName: 'Izzaty Abdullah',
+                        jointClientName: null,
+                        singleClientId: '551007039468',
+                        jointClientId: null,
+                        userId: 'qh.aa',
+                        statusRemarks: '[{"title": "Document", "content": ["Invalid supporting document", "Passport expired"]}]',
+                        omniRef: '23AA1161S0304A006',
+                        processType: 'ETB'
+                    }
+                ]
+            }
+
+
+
+            function groupDataByCurrency() {
+                const data = { ...reportData }
+                const groupedData = {}
+                if (Object.keys.length > 0) {
+                    for (const [lastUpdated, transactionDataByCurrency] of Object.entries(data)) {
+                        const dateString = lastUpdated
+                        if (!groupedData[dateString]) {
+                            groupedData[dateString] = {
+                                usdMarket: [],
+                                myrMarket: [],
+                                eurMarket: [],
+                                gbpMarket: [],
+                                audMarket: [],
+                                sgdMarket: [],
+                                rmbMarket: [],
+                                jpyMarket: [],
+                            }
+                        }
+                        transactionDataByCurrency.forEach((sale) => {
+                            this.classifySalesByCurrency(sale, groupedData, dateString)
+                        })
+                    }
+                }
+                return groupedData
+            }
+
+            function classifySalesByCurrency(
+                sale,
+                groupedData,
+                dateString
+            ) {
+                const salesByCurency = {
+                    myrMarket: 'myrMarket',
+                    usdMarket: 'usdMarket',
+                    eurMarket: 'eurMarket',
+                    gbpMarket: 'gbpMarket',
+                    audMarket: 'audMarket',
+                    sgdMarket: 'sgdMarket',
+                    rmbMarket: 'rmbMarket',
+                    jpyMarket: 'jpyMarket',
+                }
+                const currency = sale.currency.toUpperCase()
+                let marketType
+                const { myrMarket, usdMarket, eurMarket, gbpMarket, audMarket, sgdMarket, rmbMarket, jpyMarket } = salesByCurency
+                switch (currency) {
+                    case 'USD':
+                        marketType = usdMarket
+                        break
+                    case 'MYR':
+                        marketType = myrMarket
+                        break
+                    case 'EUR':
+                        marketType = eurMarket
+                        break
+                    case 'GBP':
+                        marketType = gbpMarket
+                        break
+                    case 'AUD':
+                        marketType = audMarket
+                        break
+                    case 'SGD':
+                        marketType = sgdMarket
+                        break
+                    case 'RMB':
+                        marketType = rmbMarket
+                        break
+                    case 'JPY':
+                        marketType = jpyMarket
+                        break
+                    default:
+                        break
+                }
+
+                if (marketType) {
+                    groupedData[dateString][marketType].push({
+                        ...sale,
+                        dateString,
+                    })
+                }
+                return groupedData
+            }
+            const data = groupDataByCurrency()
+            generateHtml(data);
+        </script>
+    </div>
+</body>
+
+</html>
