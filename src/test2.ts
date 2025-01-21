@@ -2,7 +2,7 @@ import * as https from "https";
 import * as crypto from "crypto";
 
 const url = "https://api.coinstore.com/api/spot/accountList";
-const apiKey = "bc4c54f4009dee671eae5cdf1500b447";
+const apiKey = "";
 // const secretKey = '6d0a41c40b5dbcc017a40e52be84914f';
 
 const secretKey: Buffer = Buffer.from(

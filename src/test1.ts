@@ -3,8 +3,8 @@ import * as https from "https";
 
 const url: string =
   "https://api.coinstore.com/api/v2/public/config/spot/symbols";
-const api_key: string = "bc4c54f4009dee671eae5cdf1500b447";
-const secret_key: string = "3f86d3951ade016b6a147b84cde97535";
+const api_key: string = "";
+const secret_key: string = "";
 
 const expires: number = Math.floor(Date.now() / 30000);
 const expires_key: string = expires.toString();
