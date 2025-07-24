@@ -4,7 +4,7 @@ export interface ICacheEntry<T> {
   expiredAt: number;
 }
 
-export type TLogLevel = "log" | "debug" | "warn" | "info";
+export type TLogLevel = "log" | "error" | "warn" | "info";
 
 export interface IChatStatisticData {
   websiteId: string;

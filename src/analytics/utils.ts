@@ -11,9 +11,9 @@ export const validateDate = (isoString: string): boolean => {
  * @param endDate - The end date string in 'YYYY-MM-DD' format.
  * @throws {Error} If either date is invalid or if the start date is later than the end date.
  */
-export const validDateRange = (startDate: string, endDate: string) => {
-  if (!validateDate(startDate)) throw new Error("Invalid Start Date Provided");
-  if (!validateDate(endDate)) throw new Error("Invalid End Date Provided");
+export const validDateRange = (startDate?: string, endDate?: string) => {
+  if (startDate && !validateDate(startDate)) throw new Error("Invalid Start Date Provided");
+  if (endDate && !validateDate(endDate)) throw new Error("Invalid End Date Provided");
   if (startDate && endDate && startDate > endDate) {
     throw new Error("Start date cannot be greater than end date");
   }
@@ -28,9 +28,9 @@ export const validDateRange = (startDate: string, endDate: string) => {
  */
 export const ApplicationError = (error: unknown) => {
   if (error instanceof Error) {
-    throw error;
+    return error;
   } else {
-    throw new Error(String(error));
+    return new Error(String(error));
   }
 };
 
@@ -70,16 +70,17 @@ export function processInBatches<T>(
  * const data = [{ date: '2024-01-01' }, { date: '2024-01-15' }, { date: '2024-02-01' }];
  * filterDataByDateRange(data, '2024-01-01', '2024-01-15'); // Returns: [{ date: '2024-01-01' }, { date: '2024-01-15' }]
  */
-export function filterDataByDateRange<T>(data: T[], startDate: string, endDate: string) {
+export function filterDataByDateRange<T>(data: T[], startDate?: string, endDate?: string) {
   if (!startDate && !endDate) return data;
-  let startTime = 0;
+
+  let startTime: number | undefined;
   if (startDate) {
     const normalisedStartDate = new Date(startDate);
     normalisedStartDate.setHours(0, 0, 0, 0);
     startTime = normalisedStartDate.getTime();
   }
 
-  let endTime = 0;
+  let endTime: number | undefined;
   if (endDate) {
     const normalisedEndDate = new Date(endDate);
     normalisedEndDate.setHours(23, 59, 59, 999);
@@ -88,9 +89,16 @@ export function filterDataByDateRange<T>(data: T[], startDate: string, endDate: 
 
   return data.filter((record: any) => {
     if (!record || typeof record.date !== "string") return false;
+    if (!validateDate(record.date)) return false;
     const recordDate = new Date(record.date);
     const recordTime = recordDate.getTime();
-    if (isNaN(recordTime)) return false;
-    return recordTime >= startTime && recordTime <= endTime;
+    if (startTime !== undefined && endTime !== undefined) {
+      return recordTime >= startTime && recordTime <= endTime;
+    } else if (startTime !== undefined) {
+      return recordTime >= startTime;
+    } else if (endTime !== undefined) {
+      return recordTime <= endTime;
+    }
+    return true;
   });
 }

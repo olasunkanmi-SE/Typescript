@@ -1,13 +1,12 @@
-import { ChatStatisticsProcessor } from "./chat/chat.statistic.processor";
+import { ChatStatisticsService } from "./chat/chat.statistics.service";
 
 async function processStatistics(startDate?: Date, endDate?: Date) {
-  const processor = await new ChatStatisticsProcessor();
-  return await processor.processStatistics(startDate, endDate);
+  const chatService = await new ChatStatisticsService();
+  return await chatService.getData(startDate, endDate);
 }
 
-export function run() {
-  processStatistics(new Date(2019, 3, 5), new Date(2019, 3, 12));
-  const aggregatedData = processStatistics();
+export async function run() {
+  const aggregatedData = await processStatistics(new Date(2019, 3, 5), new Date(2019, 3, 12));
   return aggregatedData;
 }
 

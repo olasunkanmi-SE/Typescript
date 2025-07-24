@@ -3,11 +3,12 @@ import { Logger } from "../logger";
 import { ICacheService } from "./cacheService.interface";
 
 export class CacheService implements ICacheService {
-  private readonly cache: Map<string, ICacheEntry<any>> = new Map();
+  cache: Map<string, ICacheEntry<any>>;
   private readonly logger: Logger;
 
   constructor(private readonly defaultTTL: number = 60 * 60 * 1000) {
     this.logger = Logger.initialize();
+    this.cache = new Map();
   }
 
   /**
@@ -27,13 +28,13 @@ export class CacheService implements ICacheService {
     const entry = this.cache.get(key);
     if (!entry) {
       this.logger.info(`Cache miss for ${key}`);
-      return undefined;
+      return;
     }
 
     if (Date.now() > entry.expiredAt) {
       this.logger.info(`Cache entry for key ${key} has expired`);
       this.cache.delete(key);
-      return undefined;
+      return;
     }
 
     this.logger.info(`Cache hit for key ${key}`);
@@ -58,6 +59,10 @@ export class CacheService implements ICacheService {
 
   delete(key: string): boolean {
     return this.cache.delete(key);
+  }
+
+  data(): Map<string, ICacheEntry<any>> {
+    return this.cache;
   }
 
   clear() {

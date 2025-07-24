@@ -24,8 +24,8 @@ export class Logger {
     this.logError("log", message);
   }
 
-  debug(message: string) {
-    this.logError("debug", message);
+  error(message: string) {
+    this.logError("error", message);
   }
 
   warn(message: string) {
