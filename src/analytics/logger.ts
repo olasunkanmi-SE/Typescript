@@ -1,8 +1,8 @@
 import { FileManager } from "./fileManager/file.manager";
-import { TLogLevel } from "./interfaces";
+import { ILogger, TLogLevel } from "./interfaces";
 import * as path from "path";
 
-export class Logger {
+export class Logger implements ILogger {
   private static instance: Logger;
   private readonly fileManager: FileManager;
   constructor() {
